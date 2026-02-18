@@ -10,8 +10,11 @@ export interface GrokScene {
   background_setting: string;
   objects: string;
   lighting_mood: string;
+  // Added mood property to match UI usage in App.tsx
+  mood: string;
   emotion_conveyed: string;
   dialogue_voice: string;
+  vietnamese_vocal: string; // New field for localized voiceover script
   music_sound_effects: string;
   ambient_audio: string;
   // Prompts Suite

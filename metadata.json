@@ -1,5 +1,5 @@
 {
-  "name": "VIDEO & IMAGE ANALYSIS PROMPT GENERATOR PRO",
+  "name": "PHV Generator Tool",
   "description": "Hệ thống phân tích kịch bản và tạo prompt Grok-3 Video chuyên nghiệp từ link/ảnh thực tế. Bản quyền © TonyHoaivu.Com",
   "requestFramePermissions": [
     "camera",

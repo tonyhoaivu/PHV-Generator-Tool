@@ -3,7 +3,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScriptAnalysisResult, AnalysisOptions } from "../types";
 
 export const analyzeVideoContent = async (input: string | { data: string, mimeType: string } | { data: string, mimeType: string }[], options: AnalysisOptions): Promise<ScriptAnalysisResult> => {
-  // Luôn lấy API Key từ process.env.API_KEY
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let parts: any[] = [];
@@ -33,31 +32,30 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
 
   const systemInstruction = `
 # SYSTEM ROLE:
-Bạn là hệ thống AI "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" cao cấp.
-Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịch bản phân cảnh chi tiết cho AI Video (Grok, Sora, Runway).
+Bạn là một chuyên gia biên tập video AI. Nhiệm vụ của bạn là phân tích nội dung tôi cung cấp và chia thành các phân cảnh chi tiết (mỗi cảnh khoảng 6 giây). 
 
-# NGUYÊN TẮC NGHIÊM NGẶT:
-1. PHẢI phân tích nội dung THỰC TẾ. Tuyệt đối KHÔNG tự bịa ra cảnh hoặc nhân vật không có trong nguồn.
-2. Nếu không thể truy cập nội dung -> Trả về lỗi: "Unable to analyze source content."
-3. PHÂN CẢNH VIDEO: Chia cảnh chính xác mỗi 6 giây (00:00-00:06, 00:06-00:12,...).
-4. PHÂN TÍCH ẢNH: Mô tả chi tiết diện mạo, tư thế, môi trường, bố cục. Nếu nhiều ảnh -> treat as sequential storyboard.
+# CẤU TRÚC BẮT BUỘC CHO MỖI PHÂN CẢNH:
+Với mỗi phân cảnh, bạn bắt buộc phải xuất ra đúng cấu trúc 3 phần như sau:
 
-# YÊU CẦU ĐẦU RA:
-- Phân tích & Tóm tắt: Tiếng Việt.
-- Bộ Prompt (Grok, Image, Motion, etc.): Tiếng Anh chuyên sâu, Cinematic, Ultra-detailed.
-- Tiêu đề: Tiếng Việt + Tiếng Anh (Tối thiểu 10 gợi ý với các loại: Viral, Emotional, Storytelling, SEO).
-- Hook: Tạo prompt ảnh Hook (EN) và text Thumbnail (VN).
+1. **Phân cảnh [Số thứ tự]**: Tóm tắt ngắn gọn nội dung cảnh đó bằng tiếng Việt.
+2. **Prompt**: Viết một đoạn mô tả hình ảnh chi tiết bằng tiếng Anh (để các công cụ tạo video/ảnh như Grok, Sora hiểu tốt nhất). Tập trung vào nhân vật, bối cảnh, ánh sáng, góc máy và phong cách 3D/Cinematic.
+3. **Vocal**: Viết lời bình/giọng đọc cho cảnh đó bằng tiếng Việt. Lời văn phải tự nhiên, lôi cuốn và phù hợp với nội dung cảnh.
 
-# CẤU TRÚC PHÂN CẢNH (Mỗi cảnh 6s):
-- Scene number & Timestamp
-- Character actions, Body gestures, Facial expressions
-- Camera angle/movement, Background setting, Objects
-- Lighting & mood, Emotion, Dialogue/Voice
-- Sound effects, Ambient audio
+# VÍ DỤ MẪU:
+Phân cảnh 1: Nhân vật mướp xanh xuất hiện trước hang động.
+Prompt: Cute green luffa character with a mining helmet standing in front of a mysterious dark cave entrance, cinematic lighting, 3D style, high detail.
+Vocal: "Chào các bạn, hôm nay mướp xanh sẽ cùng chúng ta khám phá một hang động bí ẩn chứa đầy kho báu."
+
+# NGUYÊN TẮC:
+- PHẢI phân tích nội dung THỰC TẾ từ nguồn cung cấp.
+- Không được bịa đặt nếu nguồn không có thông tin.
+- Mọi Prompt hình ảnh phải bằng tiếng Anh.
+- Mọi nội dung Tóm tắt và Vocal phải bằng tiếng Việt.
 `;
 
   try {
     const config: any = {
+      systemInstruction,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -96,7 +94,9 @@ Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịc
               properties: {
                 id: { type: Type.NUMBER },
                 timestamp: { type: Type.STRING },
-                visual: { type: Type.STRING },
+                visual: { type: Type.STRING, description: "Tóm tắt phân cảnh bằng Tiếng Việt" },
+                cinematic_video_prompt: { type: Type.STRING, description: "Prompt mô tả hình ảnh bằng Tiếng Anh" },
+                vietnamese_vocal: { type: Type.STRING, description: "Lời bình Vocal bằng Tiếng Việt" },
                 action: { type: Type.STRING },
                 body_gesture: { type: Type.STRING },
                 facial_expression: { type: Type.STRING },
@@ -104,11 +104,11 @@ Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịc
                 background_setting: { type: Type.STRING },
                 objects: { type: Type.STRING },
                 lighting_mood: { type: Type.STRING },
+                mood: { type: Type.STRING },
                 emotion_conveyed: { type: Type.STRING },
                 dialogue_voice: { type: Type.STRING },
                 music_sound_effects: { type: Type.STRING },
                 ambient_audio: { type: Type.STRING },
-                cinematic_video_prompt: { type: Type.STRING },
                 image_generation_prompt: { type: Type.STRING },
                 character_description_prompt: { type: Type.STRING },
                 motion_prompt: { type: Type.STRING },
@@ -116,10 +116,7 @@ Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịc
                 lighting_prompt: { type: Type.STRING },
                 environment_prompt: { type: Type.STRING }
               },
-              required: [
-                "id", "timestamp", "visual", "action", "cinematic_video_prompt",
-                "character_description_prompt", "motion_prompt", "camera_movement_prompt"
-              ]
+              required: ["id", "timestamp", "visual", "cinematic_video_prompt", "vietnamese_vocal"]
             }
           }
         },
@@ -127,14 +124,9 @@ Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịc
       }
     };
 
-    if (isUrl) {
-      config.tools = [{ googleSearch: {} }];
-    }
-
     const response = await ai.models.generateContent({
-      // Chuyển sang Flash-preview để có hạn mức cao hơn và ổn định hơn cho bản miễn phí
       model: 'gemini-3-flash-preview',
-      contents: { parts: [...parts, { text: systemInstruction }] },
+      contents: { parts },
       config
     });
 
@@ -142,17 +134,9 @@ Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịc
     if (result.error) throw new Error(result.error);
     return result;
   } catch (error: any) {
-    console.error("Gemini Error:", error);
-    
-    // Xử lý lỗi Quota/429 một cách rõ ràng
     if (error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED") || error.status === "RESOURCE_EXHAUSTED") {
-      throw new Error("BẠN ĐÃ HẾT LƯỢT DÙNG MIỄN PHÍ: Gemini đang quá tải hoặc bạn đã vượt quá giới hạn yêu cầu/phút. Vui lòng đợi 30-60 giây rồi nhấn thử lại.");
+      throw new Error("BẠN ĐÃ HẾT LƯỢT DÙNG MIỄN PHÍ: Gemini đang quá tải hoặc bạn đã vượt quá giới hạn. Vui lòng đợi 30-60 giây.");
     }
-    
-    if (error.message?.includes("API_KEY_INVALID")) {
-      throw new Error("API KEY KHÔNG HỢP LỆ: Vui lòng kiểm tra lại cấu hình mã API Key của bạn.");
-    }
-
-    throw new Error(error.message || "Lỗi hệ thống khi phân tích dữ liệu thực tế. Vui lòng thử lại sau.");
+    throw new Error(error.message || "Lỗi hệ thống khi phân tích dữ liệu thực tế.");
   }
 };
