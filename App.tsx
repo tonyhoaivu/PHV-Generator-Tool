@@ -31,7 +31,9 @@ import {
   Activity,
   Waves,
   Mic2,
-  Brain
+  Brain,
+  Star,
+  Heart
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
@@ -370,34 +372,34 @@ const App: React.FC = () => {
                 <AppLogoDisplay size={80} />
               </div>
               <h1 className="text-6xl md:text-8xl font-serif font-black text-emerald-950 mb-6 tracking-tighter leading-none">
-                PHV <span className="text-emerald-600 italic">Generator</span>
+                PHV <span className="text-emerald-600 italic">Analyst</span>
               </h1>
-              <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[1em] uppercase">Micro-Analysis • Senior AI Engineering</p>
+              <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[1em] uppercase">Video Editor • Visual Data Analytics • 6s Rules</p>
               <div className="bg-white luxury-border luxury-shadow p-12 md:p-20 rounded-[4rem] relative overflow-hidden text-left">
                 <div className="absolute top-0 right-0 p-10 opacity-5"><Sparkles size={160} className="text-emerald-600" /></div>
                 <div className="space-y-16">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between ml-4">
-                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Bóc tách Video Link (Micro-Analysis)</label>
+                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Biên tập & Phân tích (6s Timing)</label>
                       <div className="flex gap-4 opacity-40"><Youtube size={18} /><LinkIcon size={18} /></div>
                     </div>
                     <textarea 
                       className="w-full bg-gray-50/50 border border-gray-100 rounded-[3rem] p-10 text-emerald-950 text-xl focus:ring-8 focus:ring-emerald-500/5 transition-all min-h-[180px] placeholder:italic placeholder:text-gray-300 resize-none font-medium leading-relaxed"
-                      placeholder="Dán link để chuyên gia phân tích vi mô kỹ thuật..."
+                      placeholder="Dán link để biên tập viên giải mã theo quy tắc 6 giây..."
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                     />
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between ml-4">
-                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Phân tích đa phương thức (Multimodal)</label>
+                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Tải lên dữ liệu thị giác</label>
                       <Upload size={18} className="opacity-40" />
                     </div>
                     <div onClick={() => fileInputRef.current?.click()} className="group cursor-pointer border-4 border-dashed border-emerald-50 bg-emerald-50/10 rounded-[3rem] p-16 text-center hover:bg-emerald-50/30 hover:border-emerald-200 transition-all duration-500">
                       <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple hidden accept="image/*,video/*" />
                       <div className="flex flex-col items-center gap-6">
                         <div className="p-6 bg-white rounded-3xl shadow-xl group-hover:scale-110 transition-transform"><Upload size={40} className="text-emerald-600" /></div>
-                        <p className="text-emerald-950 font-black italic text-xl uppercase tracking-tight">Kéo thả để bóc tách kỹ thuật</p>
+                        <p className="text-emerald-950 font-black italic text-xl uppercase tracking-tight">Kéo thả để chuyên gia bóc tách</p>
                       </div>
                     </div>
                     {files.length > 0 && (
@@ -417,7 +419,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-8">
                     <button onClick={handleProcess} disabled={(!inputText && files.length === 0) || !isApiKeyDetected} className="btn-luxury flex-[4] text-white font-black px-12 py-8 rounded-[2.5rem] text-[15px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 disabled:opacity-50 shadow-2xl">
-                      <Brain size={28} className="animate-pulse" /> Chạy Micro-Analysis Pixar
+                      <Activity size={28} className="animate-pulse" /> Bắt đầu giải mã 6s / Phân cảnh
                     </button>
                   </div>
                 </div>
@@ -426,72 +428,79 @@ const App: React.FC = () => {
           ) : step !== 'completed' && step !== 'error' ? (
             <div className="max-w-xl mx-auto mt-32 text-center animate-fade">
               <RefreshCw size={100} className="text-emerald-600 animate-spin-slow mx-auto mb-16 opacity-30" />
-              <h3 className="text-4xl font-serif font-black text-emerald-900 mb-6 italic">Đang giải mã kỹ thuật vi mô...</h3>
+              <h3 className="text-4xl font-serif font-black text-emerald-900 mb-6 italic">Đang bóc tách dữ liệu thị giác...</h3>
               <div className="mt-16 bg-white luxury-border luxury-shadow p-10 rounded-[4rem]"><StepIndicator currentStep={step} /></div>
             </div>
           ) : result ? (
             <div className="flex flex-col lg:flex-row gap-16 mt-12 max-w-[1700px] mx-auto px-10 animate-fade">
               <div className="flex-1 space-y-20 pb-60">
-                {/* TECHNICAL ASSESSMENT (MICRO-ANALYSIS EXPERT) */}
-                <div className="bg-emerald-900 text-emerald-50 p-14 rounded-[4rem] luxury-shadow relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-10 opacity-10"><Brain size={180} /></div>
-                   <h3 className="text-xl font-black uppercase tracking-[0.5em] mb-8 flex items-center gap-4 text-emerald-400"><Shield size={24}/> Chuyên gia đánh giá tổng quan (Expert Assessment)</h3>
+                {/* ĐÁNH GIÁ KỸ THUẬT (EXPERT ANALYST) */}
+                <div className="bg-emerald-950 text-emerald-50 p-14 rounded-[4rem] luxury-shadow relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-10 opacity-10"><Activity size={180} /></div>
+                   <h3 className="text-xl font-black uppercase tracking-[0.5em] mb-8 flex items-center gap-4 text-emerald-400"><Shield size={24}/> Đánh giá từ Biên tập viên chuyên nghiệp</h3>
                    <p className="text-2xl font-serif italic leading-relaxed mb-10 border-l-4 border-emerald-500 pl-8">{result.technical_assessment || result.summary}</p>
                    <div className="flex flex-wrap gap-6">
-                      <div className="bg-emerald-800/50 px-8 py-5 rounded-[2rem] border border-emerald-700 flex items-center gap-4">
-                         <Activity size={20} className="text-emerald-400" />
-                         <span className="text-[13px] font-black uppercase tracking-[0.2em]">Cinematography: Level A+</span>
+                      <div className="bg-white/10 px-8 py-5 rounded-[2rem] border border-white/20 flex items-center gap-4">
+                         <Globe size={20} className="text-emerald-400" />
+                         <span className="text-[13px] font-black uppercase tracking-[0.2em]">Cấu trúc: {result.scenes.length} Phân cảnh x 6s</span>
                       </div>
                    </div>
                 </div>
 
                 <div className="space-y-20">
                   <div className="flex items-center justify-between border-b border-gray-100 pb-10">
-                    <h2 className="text-5xl font-serif font-black text-emerald-950 italic">Giải mã phân cảnh (6s Micro-Analysis)</h2>
+                    <h2 className="text-5xl font-serif font-black text-emerald-950 italic">Giải mã phân cảnh (Scene Deep-Dive)</h2>
                     <button onClick={() => setStep('idle')} className="bg-white border luxury-border px-10 py-4 rounded-2xl text-emerald-800 font-black uppercase text-[11px] tracking-widest hover:bg-emerald-50 transition-all flex items-center gap-3"><RefreshCw size={18} /> Phân tích video khác</button>
                   </div>
 
                   {result.scenes.map((scene) => (
                     <div key={scene.id} className="bg-white luxury-border luxury-shadow rounded-[4rem] overflow-hidden group hover:-translate-y-2 transition-all duration-700">
                       <div className="p-12 md:p-20 space-y-12">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-10">
-                            <div className="w-20 h-20 rounded-3xl bg-emerald-800 text-white flex items-center justify-center font-serif text-4xl font-black italic shadow-2xl group-hover:rotate-12 transition-transform">{scene.id}</div>
-                            <h4 className="text-3xl font-serif font-black text-emerald-950 italic tracking-tight">{scene.visual}</h4>
+                            <div className="w-20 h-20 rounded-3xl bg-emerald-900 text-white flex items-center justify-center font-serif text-4xl font-black italic shadow-2xl group-hover:rotate-12 transition-transform">{scene.id}</div>
+                            <div>
+                              <p className="text-[11px] font-black uppercase text-gray-400 tracking-widest mb-1">Time Segment</p>
+                              <h4 className="text-3xl font-serif font-black text-emerald-950 italic tracking-tight">{scene.time_range}</h4>
+                            </div>
                           </div>
-                          <div className="bg-emerald-50 text-emerald-800 px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-emerald-100 flex items-center gap-3"><Clock size={16} /> 6 Seconds</div>
+                          <div className="flex items-center gap-4">
+                            <div className="bg-amber-50 text-amber-800 px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-amber-100 flex items-center gap-3">
+                              <Heart size={16} /> {scene.sentiment}
+                            </div>
+                            <div className={`px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border flex items-center gap-3 ${scene.quality_rating === 'Tốt' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                              <Star size={16} /> {scene.quality_rating}
+                            </div>
+                          </div>
                         </div>
 
-                        {/* MICRO-ANALYSIS DETAILS */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
-                              <div className="flex items-center gap-3 mb-2">
-                                 <Activity size={18} className="text-emerald-600" />
-                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Pacing (Nhịp độ)</span>
+                        {/* ANALYST DEEP DIVE SECTION */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-gray-50/50 p-10 rounded-[3rem] border border-gray-100">
+                           <div className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                 <ImageIcon size={20} className="text-emerald-600" />
+                                 <span className="text-[11px] font-black uppercase text-emerald-800 tracking-widest">Visual Keyframe</span>
                               </div>
-                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.pacing_analysis}</p>
+                              <p className="text-[15px] text-emerald-950 font-bold leading-relaxed italic">{scene.visual_description}</p>
                            </div>
-                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
-                              <div className="flex items-center gap-3 mb-2">
-                                 <Waves size={18} className="text-blue-600" />
-                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Visual Layer (Thị giác)</span>
+                           <div className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                 <Mic2 size={20} className="text-amber-600" />
+                                 <span className="text-[11px] font-black uppercase text-amber-800 tracking-widest">Vocal & Audio Analysis</span>
                               </div>
-                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.visual_layer_analysis}</p>
-                           </div>
-                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
-                              <div className="flex items-center gap-3 mb-2">
-                                 <Mic2 size={18} className="text-amber-600" />
-                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Prosody (Ngữ điệu)</span>
+                              <p className="text-[15px] text-emerald-950 font-bold leading-relaxed">{scene.vocal_deep_dive}</p>
+                              <div className="pt-4 border-t border-gray-200">
+                                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">Sync Assessment</p>
+                                <p className="text-[13px] text-emerald-900 font-medium italic">{scene.sync_assessment}</p>
                               </div>
-                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.vocal_prosody_analysis}</p>
                            </div>
                         </div>
 
-                        {/* TECHNICAL PROMPTS */}
+                        {/* GENERATION PROMPTS */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-14 mt-12">
                           <div className="space-y-8">
                             <div className="flex justify-between items-center">
-                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-emerald-800 flex items-center gap-4"><ImageIcon size={22} /> Prompt Hình Ảnh</span>
+                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-emerald-800 flex items-center gap-4 font-serif italic"><Sparkles size={22} /> Prompt Hình Ảnh</span>
                                <button onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `ip-${scene.id}` ? 'bg-green-100 text-green-600' : 'bg-white text-emerald-600 hover:bg-emerald-50 border'}`}><Copy size={14} /> {copiedId === `ip-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}</button>
                             </div>
                             <div className="bg-gray-50/50 p-10 rounded-[2.5rem] border border-gray-100 relative group/p min-h-[160px] luxury-shadow">
@@ -500,14 +509,14 @@ const App: React.FC = () => {
                           </div>
                           <div className="space-y-8">
                             <div className="flex justify-between items-center">
-                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-amber-700 flex items-center gap-4"><MonitorPlay size={22} /> Video Motion (6s)</span>
+                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-amber-700 flex items-center gap-4 font-serif italic"><MonitorPlay size={22} /> Video Motion (6s)</span>
                                <button onClick={() => copyToClipboard(`${scene.cinematic_video_prompt} ["${scene.vietnamese_vocal}"]`, `v-${scene.id}`)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `v-${scene.id}` ? 'bg-amber-100 text-amber-800' : 'bg-white text-amber-600 hover:bg-amber-50 border'}`}><Copy size={14} /> {copiedId === `v-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}</button>
                             </div>
                             <div className="bg-amber-50/20 p-10 rounded-[2.5rem] border border-amber-100 relative group/v min-h-[160px] luxury-shadow">
                               <p className="text-[15px] text-emerald-950 font-black italic leading-relaxed">
                                 {scene.cinematic_video_prompt} 
                                 {scene.vietnamese_vocal && (
-                                  <span className="block mt-4 text-emerald-600 font-black">["{scene.vietnamese_vocal}"]</span>
+                                  <span className="block mt-4 text-emerald-700 font-black">["{scene.vietnamese_vocal}"]</span>
                                 )}
                               </p>
                             </div>
@@ -518,8 +527,9 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
+              
               <aside className="hidden lg:block w-80 space-y-8 animate-fade">
-                <div className="bg-white luxury-border luxury-shadow p-6 rounded-3xl space-y-4">
+                <div className="bg-white luxury-border luxury-shadow p-6 rounded-3xl space-y-4 sticky top-32">
                   <h3 className="text-lg font-black uppercase tracking-widest text-emerald-800 border-b pb-4 flex items-center gap-3"><Zap size={20} className="text-amber-500" /> Tài trợ / Ads</h3>
                   <div className="space-y-6">
                     {ads.map(ad => (
@@ -530,11 +540,10 @@ const App: React.FC = () => {
                         </div>
                       </a>
                     ))}
-                    {ads.length === 0 && <p className="text-gray-400 text-xs italic">Chưa có quảng cáo...</p>}
                   </div>
-                </div>
-                <div className="bg-emerald-50 luxury-border p-6 rounded-3xl">
-                  <p className="text-emerald-700/70 text-[10px] leading-relaxed italic font-bold uppercase tracking-widest text-center">{COPYRIGHT_INFO}</p>
+                  <div className="bg-emerald-50 luxury-border p-6 rounded-3xl mt-12">
+                    <p className="text-emerald-700/70 text-[10px] leading-relaxed italic font-bold uppercase tracking-widest text-center">{COPYRIGHT_INFO}</p>
+                  </div>
                 </div>
               </aside>
             </div>
@@ -544,8 +553,8 @@ const App: React.FC = () => {
 
       <footer className="py-32 px-16 border-t border-gray-100 bg-white text-center">
         <div className="mb-12 flex justify-center grayscale hover:grayscale-0 transition-all duration-700"><AppLogoDisplay size={64} /></div>
-        <h4 className="text-5xl font-serif font-black italic text-emerald-950 mb-6">PHV Generator Tool</h4>
-        <p className="text-[11px] text-gray-400 font-black uppercase tracking-[1.5em] italic mb-16 leading-none">Luxury Multimodal System</p>
+        <h4 className="text-5xl font-serif font-black italic text-emerald-950 mb-6">PHV Analyst Pro</h4>
+        <p className="text-[11px] text-gray-400 font-black uppercase tracking-[1.5em] italic mb-16 leading-none">Luxury Visual Data Engineering</p>
         <div className="flex justify-center gap-16 text-emerald-900/50 mb-20">
            <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center gap-3 text-[12px] font-black tracking-widest uppercase hover:text-emerald-600 transition-colors"><Mail size={20}/> Email</a>
            <a href="tel:0927099940" className="flex items-center gap-3 text-[12px] font-black tracking-widest uppercase hover:text-emerald-600 transition-colors"><Phone size={20}/> 0927099940</a>

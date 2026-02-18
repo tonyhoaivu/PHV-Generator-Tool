@@ -8,20 +8,19 @@ export interface Ad {
 
 export interface GrokScene {
   id: number;
-  timestamp: string;
-  visual: string;
-  action: string;
-  camera_angle: string;
-  lighting_mood: string;
-  vietnamese_vocal: string;
-  music_sound_effects: string;
-  cinematic_video_prompt: string;
+  time_range: string; // Ví dụ: 00:00 - 00:06
+  visual_description: string; // Visual Keyframe
+  vocal_deep_dive: string; // Phân tích Transcription, nhịp điệu, cảm xúc
+  sync_assessment: string; // Đánh giá sự khớp giữa hình ảnh và âm thanh
+  quality_rating: 'Tốt' | 'Cần cải thiện';
+  sentiment: string; // Cảm xúc chủ đạo
   image_generation_prompt: string;
-  // Các trường Micro-Analysis mới
-  pacing_analysis: string; // Phân tích nhịp độ/pacing
-  visual_layer_analysis: string; // Phân tích thị giác/lớp hình ảnh
-  vocal_prosody_analysis: string; // Phân tích ngữ điệu/prosody
-  subtext_analysis: string; // Phân tích cảm xúc ẩn/subtext
+  cinematic_video_prompt: string;
+  vietnamese_vocal: string;
+  // Giữ lại các trường cũ để tránh lỗi logic nếu cần
+  pacing_analysis?: string;
+  visual_layer_analysis?: string;
+  vocal_prosody_analysis?: string;
 }
 
 export interface ViralTitle {
@@ -39,7 +38,7 @@ export interface HookData {
 
 export interface ScriptAnalysisResult {
   summary: string;
-  technical_assessment: string; // Thay thế summary truyền thống bằng đánh giá kỹ thuật
+  technical_assessment: string;
   language: string;
   detected_characters: string[];
   detected_locations: string[];

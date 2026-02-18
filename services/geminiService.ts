@@ -17,34 +17,35 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
     const promptPrefix = isUrl 
-      ? `NHIỆM VỤ: Hãy thực hiện "Micro-Analysis" video này: ${input}. Đừng tóm tắt, hãy giải mã kỹ thuật.`
-      : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" với độ sâu của một đạo diễn điện ảnh.`;
+      ? `NHIỆM VỤ: Bạn là chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác. Hãy thực hiện "Micro-Analysis" theo quy tắc 6 giây cho video này: ${input}.`
+      : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" theo cấu trúc 6 giây/phân cảnh chuẩn điện ảnh.`;
     parts.push({ text: promptPrefix });
   }
 
   const systemInstruction = `
-# NHIỆM VỤ CỐT LÕI:
-Bạn là một Chuyên gia phê bình điện ảnh và Kỹ sư âm thanh cấp cao. Nhiệm vụ của bạn là phân tích video/ý tưởng theo phương pháp "Micro-Analysis", tập trung vào giải mã "Tại sao phân cảnh/vocal này lại hiệu quả" về mặt kỹ thuật và cảm giác điện ảnh.
+# VAI TRÒ:
+Bạn là một chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác cấp cao.
 
-# NGUYÊN TẮC PHÂN TÍCH VI MÔ (MICRO-ANALYSIS):
+# QUY TẮC CHIA PHÂN CẢNH (TIMING RULES):
+1. Tính tổng thời lượng video (hoặc giả định dựa trên nội dung).
+2. BẮT BUỘC chia thành các phân cảnh dài ĐÚNG 6 GIÂY (0-6s, 6-12s, 12-18s...).
+   - Video 60s = 10 phân cảnh.
+   - Video 30s = 5 phân cảnh.
+   - Nguyên tắc: Tổng thời lượng / 6 = Số lượng phân đoạn độc lập.
 
-1. PHÂN TÍCH PHÂN CẢNH (VISUAL & SCENE ANALYSIS):
-- Nhịp độ (Pacing): Tốc độ cắt cảnh, sự thay đổi khung hình (Close-up, Wide-shot) ảnh hưởng thế nào đến tâm lý.
-- Thị giác (Visual Layer): Bóc tách màu sắc, ánh sáng, bố cục. Giải mã sự tương phản và thông điệp thị giác.
-- Chuyển động (Motion): Động lực học của nhân vật (mượt mà hay mạnh bạo).
+# NỘI DUNG PHÂN TÍCH MỖI 6 GIÂY:
+- Visual Keyframe: Mô tả chi tiết hành động chính, bố cục, ánh sáng và màu sắc.
+- Vocal & Audio Deep-Dive: 
+    * Trích xuất lời thoại (Transcription).
+    * Phân tích độ mượt, nhịp điệu (Rhythm) và cảm xúc giọng đọc.
+- Sync Assessment: Đánh giá sự khớp giữa hình ảnh (ví dụ: "The Malabar Ninja") và âm thanh/vocal.
+- Sentiment: Cảm xúc chủ đạo (Hào hứng, kịch tính, giải thích...).
+- Quality Rating: "Tốt" hoặc "Cần cải thiện".
 
-2. PHÂN TÍCH VOCAL & ÂM THANH (VOCAL & AUDIO DEEP-DIVE):
-- Ngữ điệu (Prosody): Độ cao, trầm, biến thiên tông giọng và điểm nhấn (Emphasis).
-- Nhịp thở & Ngắt nghỉ: Các khoảng lặng (silence) tạo tò mò hay uy lực.
-- Cảm xúc ẩn (Subtext): Phân tích cách rung thanh quản mang lại sắc thái giễu nhại, hào hùng hay ân cần.
-
-# QUY TẮC ĐẶC BIỆT:
-- KHÔNG TÓM TẮT NỘI DUNG hời hợt. Tập trung vào GIẢI MÃ KỸ THUẬT.
-- Sử dụng thuật ngữ chuyên môn: Cinematography, Sound Design, Dutch angle, Dynamic range, Prosody...
-- Luôn bao gồm Vocal Tiếng Việt gắt trong ngoặc vuông ở cuối Video Prompt.
-
-# ĐỊNH DẠNG ĐẦU RA:
-- Trình bày kịch bản "Chiến binh Rau Củ" phong cách 3D Pixar Tactical cực kỳ chi tiết.
+# YÊU CẦU ĐẶC BIỆT:
+- KHÔNG tóm tắt hời hợt. Hãy giải mã "Tại sao đoạn này hiệu quả".
+- Luôn bao gồm Vocal Tiếng Việt trong ngoặc vuông ["..."] ở cuối Video Prompt.
+- Phong cách: 3D Pixar Tactical / Chiến binh Rau Củ.
 `;
 
   try {
@@ -55,8 +56,8 @@ Bạn là một Chuyên gia phê bình điện ảnh và Kỹ sư âm thanh cấ
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          technical_assessment: { type: Type.STRING, description: "Giải mã kỹ thuật tổng quan của video" },
-          summary: { type: Type.STRING, description: "Tóm tắt ngắn gọn ý tưởng (giữ để tương thích UI)" },
+          technical_assessment: { type: Type.STRING },
+          summary: { type: Type.STRING },
           language: { type: Type.STRING },
           detected_characters: { type: Type.ARRAY, items: { type: Type.STRING } },
           detected_locations: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -88,19 +89,17 @@ Bạn là một Chuyên gia phê bình điện ảnh và Kỹ sư âm thanh cấ
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.NUMBER },
-                timestamp: { type: Type.STRING },
-                visual: { type: Type.STRING },
+                time_range: { type: Type.STRING, description: "Ví dụ: 00:00 - 00:06" },
+                visual_description: { type: Type.STRING },
+                vocal_deep_dive: { type: Type.STRING },
+                sync_assessment: { type: Type.STRING },
+                quality_rating: { type: Type.STRING, enum: ["Tốt", "Cần cải thiện"] },
+                sentiment: { type: Type.STRING },
                 image_generation_prompt: { type: Type.STRING },
                 cinematic_video_prompt: { type: Type.STRING },
-                vietnamese_vocal: { type: Type.STRING },
-                action: { type: Type.STRING },
-                music_sound_effects: { type: Type.STRING },
-                pacing_analysis: { type: Type.STRING },
-                visual_layer_analysis: { type: Type.STRING },
-                vocal_prosody_analysis: { type: Type.STRING },
-                subtext_analysis: { type: Type.STRING }
+                vietnamese_vocal: { type: Type.STRING }
               },
-              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal", "pacing_analysis", "visual_layer_analysis", "vocal_prosody_analysis"]
+              required: ["id", "time_range", "visual_description", "vocal_deep_dive", "sync_assessment", "quality_rating", "sentiment", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal"]
             }
           }
         },
