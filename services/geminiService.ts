@@ -2,108 +2,128 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScriptAnalysisResult, AnalysisOptions } from "../types";
 
-export const analyzeVideoContent = async (input: string | { data: string, mimeType: string }, options: AnalysisOptions): Promise<ScriptAnalysisResult> => {
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+export const analyzeVideoContent = async (input: string | { data: string, mimeType: string } | { data: string, mimeType: string }[], options: AnalysisOptions): Promise<ScriptAnalysisResult> => {
+  // Always obtain the API key exclusively from process.env.API_KEY as per guidelines.
+  // We initialize the instance inside the function to ensure it uses the most current API key environment state.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  let parts: any[] = [];
+  const isString = typeof input === 'string';
+  const isUrl = isString && (input.startsWith('http') || input.includes('youtube.com') || input.includes('tiktok.com') || input.includes('facebook.com'));
 
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'PLACEHOLDER_API_KEY' || apiKey.length < 10) {
-    throw new Error(
-      "CHƯA CẤU HÌNH API KEY: \n" +
-      "Hệ thống không tìm thấy mã API. Vui lòng thiết lập GEMINI_API_KEY trong Vercel Settings và thực hiện REDEPLOY."
-    );
+  if (Array.isArray(input)) {
+    input.forEach(img => {
+      parts.push({ inlineData: { data: img.data, mimeType: img.mimeType } });
+    });
+  } else if (!isString) {
+    parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
+  } else {
+    parts.push({ text: `Source content to analyze: ${input}` });
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const isString = typeof input === 'string';
-  
-  // Xác định xem có phải là Video Input không
-  const isVideoInput = !isString && input.mimeType.startsWith('video/');
-  const isUrl = isString && (input.startsWith('http') || input.includes('youtube.com') || input.includes('tiktok.com') || input.includes('facebook.com'));
-  
-  const contentPart = isString 
-    ? { text: `Đầu vào là ${isUrl ? 'đường dẫn video' : 'kịch bản văn bản'}: ${input}` }
-    : { inlineData: { data: input.data, mimeType: input.mimeType } };
+  const systemInstruction = `
+# SYSTEM ROLE:
+You are a "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" AI agent.
+Your mission is to analyze REAL content and generate ultra-detailed scene breakdowns and AI generation prompts.
+
+# STRICT RULES:
+1. Analyze REAL visual/audio content. DO NOT invent scenes or characters not present in the source.
+2. For VIDEO (links or files): Split into 6-second blocks.
+3. For IMAGES: Analyze character appearance, poses, and environment. If multiple images, treat them as sequential storyboard scenes.
+4. If content cannot be accessed or is invalid, return "Unable to analyze source content."
+
+# OUTPUT REQUIREMENTS:
+- Analysis Language: Vietnamese
+- Generation Prompts: English
+- Titles: Vietnamese + English (10 suggestions)
+- Style: Ultra-detailed, Cinematic, optimized for Grok/Sora/Runway.
+
+# RESPONSE SCHEMA (JSON):
+Use the provided responseSchema.
+`;
 
   try {
     const config: any = {
-      thinkingConfig: { thinkingBudget: 0 },
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          summary: { type: Type.STRING, description: "Tóm tắt ngắn gọn nội dung video/kịch bản" },
-          rewritten_script: { type: Type.STRING, description: "Kịch bản đầy đủ đã được viết lại hấp dẫn hơn" },
-          language: { type: Type.STRING, description: "Ngôn ngữ của video" },
+          summary: { type: Type.STRING },
+          language: { type: Type.STRING },
           detected_characters: { type: Type.ARRAY, items: { type: Type.STRING } },
           detected_locations: { type: Type.ARRAY, items: { type: Type.STRING } },
-          viral_titles: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 tiêu đề giật tít viral" },
+          hook_data: {
+            type: Type.OBJECT,
+            properties: {
+              image_prompt: { type: Type.STRING },
+              thumbnail_text: { type: Type.STRING },
+              emotional_highlight: { type: Type.STRING },
+              dramatic_lighting: { type: Type.STRING }
+            },
+            required: ["image_prompt", "thumbnail_text", "emotional_highlight", "dramatic_lighting"]
+          },
+          titles: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                vietnamese: { type: Type.STRING },
+                english_prompt: { type: Type.STRING },
+                category: { type: Type.STRING }
+              }
+            }
+          },
           scenes: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.NUMBER },
-                timestamp: { type: Type.STRING, description: "Dấu mốc thời gian (ví dụ: 00:00 - 00:06)" },
-                visual: { type: Type.STRING, description: "Mô tả hình ảnh trong cảnh" },
-                action: { type: Type.STRING, description: "Hành động chính diễn ra" },
-                camera: { type: Type.STRING, description: "Góc quay (Close-up, Wide, v.v.)" },
-                emotion: { type: Type.STRING, description: "Cảm xúc chủ đạo của cảnh" },
-                background: { type: Type.STRING },
+                timestamp: { type: Type.STRING },
+                visual: { type: Type.STRING },
+                action: { type: Type.STRING },
+                gesture: { type: Type.STRING },
+                facial_expression: { type: Type.STRING },
+                camera: { type: Type.STRING },
+                environment: { type: Type.STRING },
+                objects: { type: Type.STRING },
                 lighting: { type: Type.STRING },
-                sound_effect: { type: Type.STRING },
-                grok_video_prompt: { type: Type.STRING, description: "Prompt tiếng Anh cực chi tiết cho AI Video (Grok/Sora)" },
+                mood: { type: Type.STRING },
+                emotion: { type: Type.STRING },
+                dialogue: { type: Type.STRING },
+                sound_effects: { type: Type.STRING },
+                ambient_audio: { type: Type.STRING },
+                grok_video_prompt: { type: Type.STRING },
                 image_prompt: { type: Type.STRING },
-                voiceover: { type: Type.STRING, description: "Lời bình/lời thoại cho cảnh này" },
-                subtitle: { type: Type.STRING }
+                character_description: { type: Type.STRING },
+                motion_prompt: { type: Type.STRING },
+                camera_movement_prompt: { type: Type.STRING },
+                lighting_prompt: { type: Type.STRING },
+                environment_prompt: { type: Type.STRING }
               }
             }
           }
         },
-        required: ["summary", "rewritten_script", "language", "detected_characters", "detected_locations", "viral_titles", "scenes"]
+        required: ["summary", "language", "detected_characters", "detected_locations", "hook_data", "titles", "scenes"]
       }
     };
 
-    // Nếu là URL thì bật Google Search để lấy thông tin video
     if (isUrl) {
       config.tools = [{ googleSearch: {} }];
     }
 
-    const systemInstruction = `
-# NHIỆM VỤ:
-Bạn là chuyên gia phân tích Video Viral và Prompt Engineer cho AI Video (Sora, Grok-3 Video, Kling).
-${isVideoInput ? "Bạn đang được xem một FILE VIDEO THỰC TẾ. Hãy phân tích kỹ từng khung hình." : "Bạn đang phân tích một kịch bản/đường dẫn."}
-
-# YÊU CẦU ĐẦU RA:
-1. Tóm tắt nội dung và viết lại kịch bản hấp dẫn hơn bản gốc.
-2. CHIA CẢNH: Chia nhỏ nội dung thành các block 6 giây (phù hợp với giới hạn của các model AI Video hiện nay).
-3. PROMPT TIẾNG ANH: Viết prompt mô tả visual cực kỳ chi tiết cho Grok/Sora. Bao gồm: Camera movement, Lighting, Cinematic style, 4K resolution, Unreal Engine 5 style.
-4. Ngôn ngữ phản hồi: Các trường mô tả tiếng Việt, riêng các trường 'prompt' dùng tiếng Anh.
-    `;
-
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: {
-        parts: [
-          contentPart,
-          { text: systemInstruction }
-        ]
-      },
+      // Complex reasoning tasks (like detailed video/scene analysis and prompt generation) 
+      // are better handled by gemini-3-pro-preview.
+      model: 'gemini-3-pro-preview',
+      contents: { parts: [...parts, { text: systemInstruction }] },
       config
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Gemini không trả về kết quả.");
-
-    return JSON.parse(text.trim());
+    // Directly access the .text property from the response as per guidelines.
+    return JSON.parse(response.text || "{}");
   } catch (error: any) {
-    console.error("Gemini SDK Error:", error);
-    
-    if (error.message?.includes("429")) {
-      throw new Error("QUOTA EXCEEDED: Bạn đã hết lượt dùng miễn phí trong phút này. Vui lòng đợi 30-60 giây.");
-    }
-    if (error.message?.includes("API_KEY_INVALID")) {
-      throw new Error("API KEY KHÔNG HỢP LỆ: Vui lòng kiểm tra lại mã API Key.");
-    }
-    
-    throw new Error(error.message || "Lỗi xử lý dữ liệu từ AI.");
+    console.error("Gemini Error:", error);
+    throw new Error(error.message || "Lỗi hệ thống khi phân tích content.");
   }
 };

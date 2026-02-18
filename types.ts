@@ -1,78 +1,50 @@
 
-export interface StoryboardScene {
-  id: number;
-  timestamp: string;
-  description_vn: string;
-  details: {
-    visuals: string;       
-    actions: string;       
-    audio: string;         
-    environment: string;   
-  };
-  video_prompt: string;
-  image_prompt: string;
-}
-
-// Added GrokScene to match geminiService output
 export interface GrokScene {
   id: number;
   timestamp: string;
   visual: string;
   action: string;
+  gesture: string;
+  facial_expression: string;
   camera: string;
-  emotion: string;
-  background: string;
+  environment: string;
+  objects: string;
   lighting: string;
-  sound_effect: string;
+  mood: string;
+  emotion: string;
+  dialogue: string;
+  sound_effects: string;
+  ambient_audio: string;
+  // Prompts
   grok_video_prompt: string;
   image_prompt: string;
-  voiceover: string;
-  subtitle: string;
+  character_description: string;
+  motion_prompt: string;
+  camera_movement_prompt: string;
+  lighting_prompt: string;
+  environment_prompt: string;
 }
 
-export interface ViralIdea {
-  idea_name: string;
-  viral_hook: string;
-  script_short: {
-    scene1_problem: string;
-    scene2_solution: string;
-    scene3_result: string;
-    expansion_scene: string;
-  };
-  grok_character_prompt: string;
+export interface ViralTitle {
+  vietnamese: string;
+  english_prompt: string;
+  category: 'Viral' | 'Emotional' | 'Storytelling' | 'SEO';
 }
 
-export interface VideoAnalysisResult {
-  summary: string;
-  summary_prompt_en: string;
-  hinh_anh_hook_list: string[]; 
-  tieu_de_goi_y: string[];      
-  context: {
-    tone: string;
-    emotion: string;
-    targetAudience: string;
-    style: string;
-    characters: string;
-    background: string;
-  };
-  scenes: StoryboardScene[];
-  viral_ideas: ViralIdea[];
-  cta_video_scene: {
-    display_text: string;
-    grok_prompt: string;
-  };
-  platform_notice?: string;
-  cta_message: string;
+export interface HookData {
+  image_prompt: string;
+  thumbnail_text: string;
+  emotional_highlight: string;
+  dramatic_lighting: string;
 }
 
-// Added ScriptAnalysisResult to match geminiService output
 export interface ScriptAnalysisResult {
   summary: string;
-  rewritten_script: string;
   language: string;
   detected_characters: string[];
   detected_locations: string[];
-  viral_titles: string[];
+  hook_data: HookData;
+  titles: ViralTitle[];
   scenes: GrokScene[];
 }
 
@@ -80,8 +52,5 @@ export type ProcessingStep = 'idle' | 'fetching' | 'transcribing' | 'analyzing' 
 
 export interface AnalysisOptions {
   doAnalysis: boolean;
-  doGrokPrompts: boolean;
-  doImagePrompts: boolean;
-  doHooks: boolean;
-  doTitles: boolean;
+  type: 'video' | 'image' | 'text';
 }
