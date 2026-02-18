@@ -36,7 +36,8 @@ import {
   Heart,
   TrendingUp,
   Hash,
-  Rocket
+  Rocket,
+  Check
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
@@ -251,6 +252,12 @@ const App: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const copyAllHashtags = () => {
+    if (!result?.trending_hashtags) return;
+    const allHash = result.trending_hashtags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ');
+    copyToClipboard(allHash, 'copy-all-hash');
+  };
+
   const AppLogoDisplay = ({ size = 32 }: { size?: number }) => {
     if (appLogo) {
       return <img src={appLogo} alt="Logo" className="object-contain rounded-lg shadow-sm" style={{ width: size, height: size }} />;
@@ -375,7 +382,7 @@ const App: React.FC = () => {
                 <AppLogoDisplay size={80} />
               </div>
               <h1 className="text-6xl md:text-8xl font-serif font-black text-emerald-950 mb-6 tracking-tighter leading-none">
-                PHV <span className="text-emerald-600 italic">Analyst</span>
+                PHV <span className="text-emerald-600 italic">Generator Tool</span>
               </h1>
               <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[1em] uppercase">Video Editor • Visual Data Analytics • 6s Rules</p>
               <div className="bg-white luxury-border luxury-shadow p-12 md:p-20 rounded-[4rem] relative overflow-hidden text-left">
@@ -450,7 +457,7 @@ const App: React.FC = () => {
                    </div>
                 </div>
 
-                {/* VIRAL STRATEGY SECTION (NEW) */}
+                {/* VIRAL STRATEGY SECTION */}
                 <div className="bg-white luxury-border luxury-shadow rounded-[4rem] p-12 md:p-20 space-y-12">
                    <div className="flex items-center gap-6">
                       <div className="p-5 bg-amber-50 rounded-3xl"><Rocket size={32} className="text-amber-600" /></div>
@@ -468,7 +475,7 @@ const App: React.FC = () => {
                                <div key={i} className="group bg-gray-50 p-6 rounded-2xl border border-gray-100 hover:border-emerald-200 transition-all luxury-shadow relative">
                                   <div className="flex justify-between items-center mb-2">
                                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${t.category === 'Viral' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>{t.category}</span>
-                                     <button onClick={() => copyToClipboard(t.vietnamese, `title-${i}`)} className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600"><Copy size={16}/></button>
+                                     <button onClick={() => copyToClipboard(t.vietnamese, `title-${i}`)} className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600 hover:scale-110"><Copy size={16}/></button>
                                   </div>
                                   <p className="text-emerald-950 font-bold italic text-lg leading-tight">{t.vietnamese}</p>
                                   {copiedId === `title-${i}` && <span className="absolute right-4 top-4 text-[10px] text-green-600 font-black animate-fade">ĐÃ COPY!</span>}
@@ -478,19 +485,32 @@ const App: React.FC = () => {
                       </div>
                       
                       <div className="space-y-8">
-                         <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest flex items-center gap-4"><Hash size={20}/> Hashtag Tìm Kiếm Nhiều Nhất</h3>
-                         <div className="flex flex-wrap gap-4 bg-emerald-50/30 p-8 rounded-[3rem] border border-emerald-50">
-                            {result.trending_hashtags.map((tag, i) => (
-                               <button 
-                                  key={i} 
-                                  onClick={() => copyToClipboard(tag.startsWith('#') ? tag : `#${tag}`, `hash-${i}`)}
-                                  className="bg-white px-5 py-3 rounded-full border border-emerald-100 text-emerald-800 font-bold text-sm hover:bg-emerald-800 hover:text-white transition-all luxury-shadow"
-                               >
-                                  {tag.startsWith('#') ? tag : `#${tag}`}
-                               </button>
-                            ))}
+                         <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest flex items-center gap-4"><Hash size={20}/> Hashtag Tìm Kiếm</h3>
+                            <button 
+                               onClick={copyAllHashtags}
+                               className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${copiedId === 'copy-all-hash' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-emerald-700 border-emerald-100 hover:bg-emerald-50'}`}
+                            >
+                               {copiedId === 'copy-all-hash' ? <Check size={14}/> : <Copy size={14}/>} 
+                               {copiedId === 'copy-all-hash' ? 'Đã sao chép tất cả' : 'Sao chép tất cả'}
+                            </button>
                          </div>
-                         <p className="text-[10px] text-gray-400 italic font-medium px-4">Gợi ý: Sử dụng tối thiểu 3-5 hashtag cho mỗi video để tối ưu SEO.</p>
+                         <div className="flex flex-wrap gap-4 bg-emerald-50/30 p-8 rounded-[3rem] border border-emerald-50">
+                            {result.trending_hashtags.map((tag, i) => {
+                               const fullTag = tag.startsWith('#') ? tag : `#${tag}`;
+                               return (
+                                 <button 
+                                    key={i} 
+                                    onClick={() => copyToClipboard(fullTag, `hash-${i}`)}
+                                    className={`px-5 py-3 rounded-full border text-sm font-bold transition-all luxury-shadow flex items-center gap-2 ${copiedId === `hash-${i}` ? 'bg-emerald-800 text-white border-emerald-800' : 'bg-white border-emerald-100 text-emerald-800 hover:bg-emerald-50'}`}
+                                 >
+                                    {fullTag}
+                                    {copiedId === `hash-${i}` && <Check size={14} />}
+                                 </button>
+                               );
+                            })}
+                         </div>
+                         <p className="text-[10px] text-gray-400 italic font-medium px-4">Gợi ý: Click vào từng hashtag hoặc sử dụng nút "Sao chép tất cả" để tối ưu SEO.</p>
                       </div>
                    </div>
                 </div>
@@ -601,7 +621,7 @@ const App: React.FC = () => {
 
       <footer className="py-32 px-16 border-t border-gray-100 bg-white text-center">
         <div className="mb-12 flex justify-center grayscale hover:grayscale-0 transition-all duration-700"><AppLogoDisplay size={64} /></div>
-        <h4 className="text-5xl font-serif font-black italic text-emerald-950 mb-6">PHV Analyst Pro</h4>
+        <h4 className="text-5xl font-serif font-black italic text-emerald-950 mb-6">PHV Generator Tool</h4>
         <p className="text-[11px] text-gray-400 font-black uppercase tracking-[1.5em] italic mb-16 leading-none">Luxury Visual Data Engineering</p>
         <div className="flex justify-center gap-16 text-emerald-900/50 mb-20">
            <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center gap-3 text-[12px] font-black tracking-widest uppercase hover:text-emerald-600 transition-colors"><Mail size={20}/> Email</a>
