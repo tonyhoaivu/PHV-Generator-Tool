@@ -33,7 +33,10 @@ import {
   Mic2,
   Brain,
   Star,
-  Heart
+  Heart,
+  TrendingUp,
+  Hash,
+  Rocket
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
@@ -443,6 +446,51 @@ const App: React.FC = () => {
                       <div className="bg-white/10 px-8 py-5 rounded-[2rem] border border-white/20 flex items-center gap-4">
                          <Globe size={20} className="text-emerald-400" />
                          <span className="text-[13px] font-black uppercase tracking-[0.2em]">Cấu trúc: {result.scenes.length} Phân cảnh x 6s</span>
+                      </div>
+                   </div>
+                </div>
+
+                {/* VIRAL STRATEGY SECTION (NEW) */}
+                <div className="bg-white luxury-border luxury-shadow rounded-[4rem] p-12 md:p-20 space-y-12">
+                   <div className="flex items-center gap-6">
+                      <div className="p-5 bg-amber-50 rounded-3xl"><Rocket size={32} className="text-amber-600" /></div>
+                      <div>
+                         <h2 className="text-4xl font-serif font-black text-emerald-950 italic">Chiến lược Viral (Viral Strategy)</h2>
+                         <p className="text-[11px] font-black uppercase text-gray-400 tracking-[0.3em] mt-2">Tiêu đề & Hashtag top xu hướng</p>
+                      </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                      <div className="space-y-8">
+                         <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest flex items-center gap-4"><TrendingUp size={20}/> Gợi ý Tiêu đề Viral</h3>
+                         <div className="space-y-4">
+                            {result.titles.map((t, i) => (
+                               <div key={i} className="group bg-gray-50 p-6 rounded-2xl border border-gray-100 hover:border-emerald-200 transition-all luxury-shadow relative">
+                                  <div className="flex justify-between items-center mb-2">
+                                     <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${t.category === 'Viral' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>{t.category}</span>
+                                     <button onClick={() => copyToClipboard(t.vietnamese, `title-${i}`)} className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600"><Copy size={16}/></button>
+                                  </div>
+                                  <p className="text-emerald-950 font-bold italic text-lg leading-tight">{t.vietnamese}</p>
+                                  {copiedId === `title-${i}` && <span className="absolute right-4 top-4 text-[10px] text-green-600 font-black animate-fade">ĐÃ COPY!</span>}
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                      
+                      <div className="space-y-8">
+                         <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest flex items-center gap-4"><Hash size={20}/> Hashtag Tìm Kiếm Nhiều Nhất</h3>
+                         <div className="flex flex-wrap gap-4 bg-emerald-50/30 p-8 rounded-[3rem] border border-emerald-50">
+                            {result.trending_hashtags.map((tag, i) => (
+                               <button 
+                                  key={i} 
+                                  onClick={() => copyToClipboard(tag.startsWith('#') ? tag : `#${tag}`, `hash-${i}`)}
+                                  className="bg-white px-5 py-3 rounded-full border border-emerald-100 text-emerald-800 font-bold text-sm hover:bg-emerald-800 hover:text-white transition-all luxury-shadow"
+                               >
+                                  {tag.startsWith('#') ? tag : `#${tag}`}
+                               </button>
+                            ))}
+                         </div>
+                         <p className="text-[10px] text-gray-400 italic font-medium px-4">Gợi ý: Sử dụng tối thiểu 3-5 hashtag cho mỗi video để tối ưu SEO.</p>
                       </div>
                    </div>
                 </div>

@@ -44,6 +44,7 @@ export interface ScriptAnalysisResult {
   detected_locations: string[];
   hook_data: HookData;
   titles: ViralTitle[];
+  trending_hashtags: string[];
   scenes: GrokScene[];
 }
 

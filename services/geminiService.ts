@@ -17,34 +17,32 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
     const promptPrefix = isUrl 
-      ? `NHIỆM VỤ: Bạn là chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác. Hãy thực hiện "Micro-Analysis" theo quy tắc 6 giây cho video này: ${input}.`
-      : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" theo cấu trúc 6 giây/phân cảnh chuẩn điện ảnh.`;
+      ? `NHIỆM VỤ: Bạn là chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác. Hãy thực hiện "Micro-Analysis" theo quy tắc 6 giây cho video này: ${input}. Đồng thời đề xuất tiêu đề Viral và Hashtag top xu hướng.`
+      : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" 6s và đề xuất chiến lược viral (Tiêu đề + Hashtag).`;
     parts.push({ text: promptPrefix });
   }
 
   const systemInstruction = `
 # VAI TRÒ:
-Bạn là một chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác cấp cao.
+Bạn là một chuyên gia Biên tập Video, Phân tích Dữ liệu thị giác và Chuyên gia Marketing Viral trên Social Media.
 
 # QUY TẮC CHIA PHÂN CẢNH (TIMING RULES):
 1. Tính tổng thời lượng video (hoặc giả định dựa trên nội dung).
 2. BẮT BUỘC chia thành các phân cảnh dài ĐÚNG 6 GIÂY (0-6s, 6-12s, 12-18s...).
-   - Video 60s = 10 phân cảnh.
-   - Video 30s = 5 phân cảnh.
    - Nguyên tắc: Tổng thời lượng / 6 = Số lượng phân đoạn độc lập.
 
+# CHIẾN LƯỢC VIRAL:
+- Gợi ý 5 Tiêu đề (titles) mang tính "giật gân", "tò mò" hoặc "SEO tốt" bằng tiếng Việt.
+- Đề xuất 10 Hashtag (trending_hashtags) đang được tìm kiếm nhiều nhất liên quan đến chủ đề (AI, Video, Pixar, Tactical, Rau Củ...).
+
 # NỘI DUNG PHÂN TÍCH MỖI 6 GIÂY:
-- Visual Keyframe: Mô tả chi tiết hành động chính, bố cục, ánh sáng và màu sắc.
-- Vocal & Audio Deep-Dive: 
-    * Trích xuất lời thoại (Transcription).
-    * Phân tích độ mượt, nhịp điệu (Rhythm) và cảm xúc giọng đọc.
-- Sync Assessment: Đánh giá sự khớp giữa hình ảnh (ví dụ: "The Malabar Ninja") và âm thanh/vocal.
-- Sentiment: Cảm xúc chủ đạo (Hào hứng, kịch tính, giải thích...).
-- Quality Rating: "Tốt" hoặc "Cần cải thiện".
+- Visual Keyframe: Mô tả chi tiết hành động, bố cục và màu sắc.
+- Vocal & Audio Deep-Dive: Trích xuất lời thoại, phân tích nhịp điệu và cảm xúc.
+- Sync Assessment: Đánh giá sự khớp giữa hình ảnh và âm thanh.
+- Sentiment & Quality: Cảm xúc chủ đạo và Đánh giá chất lượng (Tốt/Cần cải thiện).
 
 # YÊU CẦU ĐẶC BIỆT:
-- KHÔNG tóm tắt hời hợt. Hãy giải mã "Tại sao đoạn này hiệu quả".
-- Luôn bao gồm Vocal Tiếng Việt trong ngoặc vuông ["..."] ở cuối Video Prompt.
+- Luôn bao gồm Vocal Tiếng Việt trong ngoặc vuông ["..."] ở cuối mỗi Video Prompt.
 - Phong cách: 3D Pixar Tactical / Chiến binh Rau Củ.
 `;
 
@@ -83,13 +81,17 @@ Bạn là một chuyên gia Biên tập Video và Phân tích Dữ liệu thị 
               required: ["vietnamese", "english_prompt", "category"]
             }
           },
+          trending_hashtags: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
           scenes: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.NUMBER },
-                time_range: { type: Type.STRING, description: "Ví dụ: 00:00 - 00:06" },
+                time_range: { type: Type.STRING },
                 visual_description: { type: Type.STRING },
                 vocal_deep_dive: { type: Type.STRING },
                 sync_assessment: { type: Type.STRING },
@@ -103,7 +105,7 @@ Bạn là một chuyên gia Biên tập Video và Phân tích Dữ liệu thị 
             }
           }
         },
-        required: ["technical_assessment", "summary", "language", "detected_characters", "detected_locations", "hook_data", "titles", "scenes"]
+        required: ["technical_assessment", "summary", "language", "detected_characters", "detected_locations", "hook_data", "titles", "trending_hashtags", "scenes"]
       }
     };
 
