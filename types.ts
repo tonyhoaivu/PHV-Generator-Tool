@@ -1,4 +1,11 @@
 
+export interface Ad {
+  id: string;
+  imageUrl: string;
+  link: string;
+  title: string;
+}
+
 export interface GrokScene {
   id: number;
   timestamp: string;
@@ -10,14 +17,12 @@ export interface GrokScene {
   background_setting: string;
   objects: string;
   lighting_mood: string;
-  // Added mood property to match UI usage in App.tsx
   mood: string;
   emotion_conveyed: string;
   dialogue_voice: string;
-  vietnamese_vocal: string; // New field for localized voiceover script
+  vietnamese_vocal: string;
   music_sound_effects: string;
   ambient_audio: string;
-  // Prompts Suite
   cinematic_video_prompt: string;
   image_generation_prompt: string;
   character_description_prompt: string;

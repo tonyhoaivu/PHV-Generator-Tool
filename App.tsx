@@ -5,17 +5,10 @@ import {
   RefreshCw,
   Zap,
   Sparkles,
-  Terminal,
   FileText,
   MonitorPlay,
   Upload,
-  Download,
-  Trash2,
-  FileJson,
   Cpu,
-  ExternalLink,
-  ShieldCheck,
-  ShieldAlert,
   X,
   FileVideo,
   Image as ImageIcon,
@@ -28,20 +21,36 @@ import {
   Camera,
   Layers,
   Wind,
-  Plus,
-  ArrowRight,
-  Scissors,
-  Volume2,
-  FileSearch,
-  MessageSquareQuote
+  PlusCircle,
+  Trash2,
+  Shield,
+  Settings,
+  Lock,
+  LogIn,
+  Link as LinkIcon,
+  Youtube,
+  Globe,
+  Tag,
+  Target,
+  FileCode,
+  Clock
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
-import { ScriptAnalysisResult, ProcessingStep, GrokScene } from './types';
+import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
 import StepIndicator from './components/StepIndicator';
 
 const COPYRIGHT_INFO = "Bản quyền © TonyHoaivu.Com | Email: tonyhoaivu@gmail.com | Phone: 0927099940";
+const ADMIN_PASSWORD = "0927099940@Phv";
+
+const DEFAULT_ADS: Ad[] = [
+  { id: '1', title: 'Khóa học AI Video', imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400', link: 'https://tonyhoaivu.com/course' },
+  { id: '2', title: 'Bộ Prompt Grok-3', imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400', link: 'https://tonyhoaivu.com/prompts' }
+];
 
 const App: React.FC = () => {
+  const [view, setView] = useState<'home' | 'admin'>('home');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminPassInput, setAdminPassInput] = useState('');
   const [inputText, setInputText] = useState('');
   const [files, setFiles] = useState<{ data: string, mimeType: string, name: string, size: number }[]>([]);
   const [step, setStep] = useState<ProcessingStep>('idle');
@@ -49,42 +58,76 @@ const App: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isApiKeyDetected, setIsApiKeyDetected] = useState<boolean>(false);
-  const [expandedScene, setExpandedScene] = useState<number | null>(null);
+  const [ads, setAds] = useState<Ad[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const key = process.env.API_KEY || "";
     setIsApiKeyDetected(!!key && key !== 'undefined' && key.length > 10);
-  }, []);
-  
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = e.target.files;
-    if (uploadedFiles) {
-      Array.from(uploadedFiles).forEach((f: File) => {
-        if (f.size > 50 * 1024 * 1024) {
-          alert(`File ${f.name} quá lớn (tối đa 50MB).`);
-          return;
-        }
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (reader.result) {
-            const base64 = (reader.result as string).split(',')[1];
-            setFiles(prev => [...prev, { 
-              data: base64, 
-              mimeType: f.type, 
-              name: f.name,
-              size: f.size
-            }]);
-            setInputText("");
-          }
-        };
-        reader.readAsDataURL(f);
-      });
+
+    const savedAds = localStorage.getItem('phv_ads');
+    if (savedAds) {
+      setAds(JSON.parse(savedAds));
+    } else {
+      setAds(DEFAULT_ADS);
     }
+  }, []);
+
+  const saveAds = (newAds: Ad[]) => {
+    setAds(newAds);
+    localStorage.setItem('phv_ads', JSON.stringify(newAds));
+  };
+
+  const addAd = () => {
+    const newAd: Ad = {
+      id: Math.random().toString(36).substring(2, 9),
+      title: 'Quảng cáo mới',
+      imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400',
+      link: 'https://tonyhoaivu.com'
+    };
+    saveAds([...ads, newAd]);
+  };
+
+  const removeAd = (id: string) => {
+    saveAds(ads.filter(ad => ad.id !== id));
+  };
+
+  const updateAd = (id: string, field: keyof Ad, value: string) => {
+    saveAds(ads.map(ad => ad.id === id ? { ...ad, [field]: value } : ad));
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles) return;
+
+    const newFiles = await Promise.all(Array.from(selectedFiles).map(async (file) => {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      return {
+        data: base64.split(',')[1],
+        mimeType: file.type,
+        name: file.name,
+        size: file.size
+      };
+    }));
+    setFiles([...files, ...newFiles]);
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPassInput === ADMIN_PASSWORD) {
+      setIsAdminAuthenticated(true);
+      setError(null);
+    } else {
+      setError("Mật khẩu Admin không chính xác.");
+    }
   };
 
   const handleProcess = async () => {
@@ -93,20 +136,16 @@ const App: React.FC = () => {
     setResult(null);
     try {
       setStep('fetching');
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 600));
       setStep('transcribing');
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 600));
       setStep('analyzing');
-      
-      const inputData = files.length > 0 
-        ? (files.length === 1 ? files[0] : files)
-        : inputText;
-      
+      const inputData = files.length > 0 ? (files.length === 1 ? files[0] : files) : inputText;
       const analysis = await analyzeVideoContent(inputData as any, { doAnalysis: true, type: 'video' });
       setResult(analysis);
       setStep('completed');
     } catch (err: any) {
-      setError(err.message || "Unable to analyze source content.");
+      setError(err.message || "Lỗi tạo kịch bản.");
       setStep('error');
     }
   };
@@ -117,101 +156,108 @@ const App: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const exportData = (format: 'txt' | 'json') => {
-    if (!result) return;
-    let content = "";
-    let fileName = `tonyhoaivu-script-${Date.now()}.${format}`;
-    let type = "text/plain";
+  const Sidebar = () => (
+    <aside className="hidden lg:block w-80 space-y-8 animate-fade">
+      <div className="bg-white luxury-border luxury-shadow p-6 rounded-3xl space-y-4">
+        <h3 className="text-lg font-black uppercase tracking-widest text-emerald-800 border-b pb-4 flex items-center gap-3">
+          <Zap size={20} className="text-amber-500" /> Tài trợ / Ads
+        </h3>
+        <div className="space-y-6">
+          {ads.map(ad => (
+            <a key={ad.id} href={ad.link} target="_blank" rel="noopener noreferrer" className="block group">
+              <div className="relative rounded-2xl overflow-hidden mb-3 aspect-video luxury-border luxury-shadow">
+                <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <span className="text-white text-xs font-bold uppercase tracking-wider">{ad.title}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+          {ads.length === 0 && <p className="text-gray-400 text-xs italic">Chưa có quảng cáo...</p>}
+        </div>
+      </div>
+    </aside>
+  );
 
-    if (format === 'json') {
-      content = JSON.stringify({ ...result, copyright: COPYRIGHT_INFO }, null, 2);
-      type = "application/json";
-    } else {
-      content = `CHUYÊN GIA BIÊN TẬP VIDEO AI - STORYBOARD PRO\n`;
-      content += `===================================================\n`;
-      content += `Tóm tắt tổng quát: ${result.summary}\n\n`;
-      result.scenes.forEach(s => {
-        content += `Phân cảnh ${s.id}: ${s.visual}\n`;
-        content += `Prompt: ${s.cinematic_video_prompt}\n`;
-        content += `Vocal: ${s.vietnamese_vocal}\n\n`;
-      });
-      content += `\n${COPYRIGHT_INFO}`;
-    }
-
-    const a = document.createElement("a");
-    const blob = new Blob([content], { type });
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
-    a.click();
-  };
-
-  const renderContent = () => {
+  const HomeView = () => {
     if (step === 'idle') {
       return (
-        <div className="mt-12 text-center px-4 animate-in fade-in duration-1000 max-w-5xl mx-auto">
-          <div className="mb-8 inline-flex items-center justify-center p-6 rounded-[2rem] bg-blue-600/10 border border-blue-500/20 shadow-[0_0_50px_rgba(37,99,235,0.2)]">
-            <MonitorPlay size={56} className="text-blue-400 animate-pulse" />
+        <div className="max-w-4xl mx-auto mt-20 text-center animate-fade">
+          <div className="mb-10 inline-flex items-center justify-center p-6 rounded-full bg-emerald-50 border border-emerald-100 luxury-shadow">
+            <Shield size={64} className="text-emerald-600" />
           </div>
-          <h1 className="text-5xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter italic leading-none">
-            AI VIDEO <span className="text-blue-500">EDITOR</span> PRO <span className="text-blue-600">TOOL</span>
+          <h1 className="text-6xl md:text-7xl font-serif font-black text-emerald-950 mb-6 tracking-tighter leading-none">
+            PHV <span className="text-emerald-600 italic">Generator</span> Tool
           </h1>
-          <p className="text-gray-500 text-xs font-black italic opacity-80 mb-12 tracking-[0.6em] uppercase">
-            Phân cảnh chi tiết • Prompt chuyên sâu • Vocal tự nhiên
+          <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[0.8em] uppercase">
+            6s Scene Duration • AI Link Analysis • Veggie Warriors
           </p>
-          
-          <div className="glass p-10 md:p-16 rounded-[3.5rem] border border-white/5 shadow-3xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-10 opacity-10">
-              <Cpu size={48} className="text-blue-500" />
+
+          <div className="bg-white luxury-border luxury-shadow p-12 md:p-16 rounded-[4rem] relative overflow-hidden text-left">
+            <div className="absolute top-0 right-0 p-10 opacity-5">
+              <Sparkles size={120} className="text-emerald-600" />
             </div>
 
-            <div className="space-y-10">
-              {files.length === 0 ? (
-                <div className="relative group">
-                  <textarea 
-                    className="w-full bg-black/60 border border-white/5 rounded-[2.5rem] p-10 text-white text-lg focus:ring-4 focus:ring-blue-500/20 transition-all min-h-[220px] placeholder:italic placeholder:text-gray-700 shadow-inner resize-none font-medium leading-relaxed"
-                    placeholder="Dán kịch bản hoặc link Video của bạn vào đây để chuyên gia AI bắt đầu biên tập..."
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                  />
-                  <div className="absolute bottom-8 right-10 flex items-center gap-2 text-[10px] text-gray-600 font-black uppercase tracking-widest italic pointer-events-none opacity-40">
-                    <Zap size={12} /> AI Storyboarding Engine
+            <div className="space-y-12">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between ml-4">
+                  <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.3em]">Nguồn Video (Link hoặc Ý tưởng)</label>
+                  <div className="flex gap-4 opacity-40">
+                    <Youtube size={16} /><LinkIcon size={16} />
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 p-8 bg-black/40 rounded-[2.5rem] border border-dashed border-white/10">
-                  {files.map((f, i) => (
-                    <div key={i} className="relative group aspect-square bg-[#0a0f1d] rounded-3xl flex flex-col items-center justify-center p-6 border border-white/5 hover:border-blue-500/30 transition-all overflow-hidden shadow-2xl">
-                      {f.mimeType.includes('video') ? <FileVideo size={48} className="text-blue-400" /> : <ImageIcon size={48} className="text-purple-400" />}
-                      <span className="text-[10px] font-black text-gray-500 mt-4 truncate w-full text-center px-4 italic uppercase">{f.name}</span>
-                      <button onClick={() => removeFile(i)} className="absolute top-3 right-3 p-2 bg-red-600/90 rounded-full hover:bg-red-600 transition-colors shadow-lg">
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square bg-blue-600/5 border border-dashed border-blue-500/20 rounded-3xl flex flex-col items-center justify-center gap-4 hover:bg-blue-600/10 transition-all group"
-                  >
-                    <Plus size={40} className="text-blue-500 group-hover:scale-110 transition-transform duration-500" />
-                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Thêm Media</span>
-                  </button>
+                <textarea 
+                  className="w-full bg-gray-50/50 border border-gray-100 rounded-[2.5rem] p-10 text-emerald-950 text-xl focus:ring-4 focus:ring-emerald-500/10 transition-all min-h-[160px] placeholder:italic placeholder:text-gray-300 resize-none font-medium leading-relaxed"
+                  placeholder="Dán link YouTube, TikTok hoặc nhập tên Chiến binh Rau Củ..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between ml-4">
+                  <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.3em]">Tải lên Ảnh/Video thực tế</label>
+                  <Upload size={16} className="opacity-40" />
                 </div>
-              )}
+                
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group cursor-pointer border-2 border-dashed border-emerald-100 bg-emerald-50/20 rounded-[2.5rem] p-12 text-center hover:bg-emerald-50/40 hover:border-emerald-300 transition-all"
+                >
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple hidden accept="image/*,video/*" />
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-5 bg-white rounded-3xl shadow-sm group-hover:scale-110 transition-transform">
+                       <Upload size={32} className="text-emerald-600" />
+                    </div>
+                    <div>
+                       <p className="text-emerald-950 font-black italic text-lg uppercase">Click để tải File</p>
+                    </div>
+                  </div>
+                </div>
+
+                {files.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                    {files.map((f, i) => (
+                      <div key={i} className="relative group bg-white p-3 rounded-2xl border border-emerald-50 luxury-shadow">
+                        <button onClick={() => removeFile(i)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-100 z-10"><X size={12}/></button>
+                        {f.mimeType.startsWith('image/') ? (
+                          <img src={`data:${f.mimeType};base64,${f.data}`} className="w-full aspect-square object-cover rounded-xl" alt="Preview" />
+                        ) : (
+                          <div className="w-full aspect-square bg-emerald-900 rounded-xl flex items-center justify-center"><FileVideo size={32} className="text-emerald-400" /></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-6">
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" multiple onChange={handleFileUpload} />
-                <button 
-                  onClick={() => fileInputRef.current?.click()} 
-                  className="flex-1 px-12 py-7 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 text-white font-black uppercase text-[13px] tracking-widest transition-all flex items-center justify-center gap-4 active:scale-95 shadow-2xl"
-                >
-                  <Upload size={22} /> Chọn Nguồn
-                </button>
                 <button 
                   onClick={handleProcess} 
                   disabled={(!inputText && files.length === 0) || !isApiKeyDetected} 
-                  className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:opacity-50 text-white font-black px-12 py-7 rounded-3xl text-[13px] uppercase tracking-[0.3em] transition-all shadow-[0_25px_60px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 active:scale-95"
+                  className="btn-luxury flex-[3] text-white font-black px-12 py-7 rounded-3xl text-[14px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 disabled:opacity-50"
                 >
-                  <Sparkles size={22} className="animate-pulse" /> BẮT ĐẦU BIÊN TẬP
+                  <Sparkles size={24} className="animate-pulse" /> Sáng tạo kịch bản (Mỗi cảnh 6s)
                 </button>
               </div>
             </div>
@@ -219,216 +265,163 @@ const App: React.FC = () => {
         </div>
       );
     }
-
+    
     if (step !== 'completed' && step !== 'error') {
       return (
-        <div className="max-w-xl mx-auto mt-24 px-4">
-          <div className="text-center mb-16">
-            <div className="relative inline-block mb-12">
-               <RefreshCw size={84} className="text-blue-500 animate-spin-slow opacity-10" />
-               <Zap size={42} className="text-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
-            </div>
-            <h3 className="text-3xl font-black text-white uppercase tracking-[0.5em] italic mb-6">Đang Biên Tập...</h3>
-            <p className="text-[11px] text-gray-500 italic max-w-sm mx-auto leading-relaxed uppercase tracking-[0.4em] font-black">AI đang phân tích, viết prompt và sáng tạo vocal cho từng cảnh...</p>
+        <div className="max-w-xl mx-auto mt-32 text-center animate-fade">
+          <RefreshCw size={80} className="text-emerald-600 animate-spin-slow mx-auto mb-12 opacity-20" />
+          <h3 className="text-3xl font-serif font-black text-emerald-900 mb-4 italic">Đang phân tích kịch bản 6s...</h3>
+          <div className="mt-12 bg-white luxury-border luxury-shadow p-8 rounded-[3rem]">
+            <StepIndicator currentStep={step} />
           </div>
-          <StepIndicator currentStep={step} />
         </div>
       );
     }
-
-    if (step === 'error') {
-      return (
-        <div className="max-w-xl mx-auto mt-24 text-center px-12 py-16 glass rounded-[3.5rem] border border-red-500/20 shadow-2xl animate-in zoom-in">
-          <AlertCircle size={84} className="text-red-500 mx-auto mb-10 shadow-red-500/20 shadow-2xl" />
-          <h2 className="text-white font-black uppercase text-2xl mb-6 tracking-widest italic">Lỗi Xử Lý</h2>
-          <p className="text-red-400 text-base italic font-bold mb-14 leading-relaxed bg-red-500/5 p-10 rounded-[2.5rem] border border-red-500/10 shadow-inner">
-            {error}
-          </p>
-          <button onClick={() => setStep('idle')} className="w-full bg-blue-600 hover:bg-blue-500 text-white px-12 py-7 rounded-3xl font-black text-[13px] uppercase tracking-widest transition-all shadow-2xl active:scale-95">
-            Thử Lại
-          </button>
-        </div>
-      );
-    }
-
+    
     if (result) {
       return (
-        <div className="w-full mt-10 px-6 pb-48 space-y-20 max-w-[1600px] mx-auto animate-in fade-in duration-1000">
-          {/* Header Actions */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-12 border-b border-white/5 pb-12">
-            <div className="space-y-4 text-center md:text-left">
-               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter flex items-center gap-6 justify-center md:justify-start">
-                <MonitorPlay className="text-blue-500" size={48}/> KẾT QUẢ BIÊN TẬP <span className="text-blue-500">AI</span>
-               </h2>
-               <div className="flex flex-wrap gap-5 items-center justify-center md:justify-start">
-                 <span className="bg-blue-600/10 text-blue-400 text-[11px] font-black px-6 py-2.5 rounded-full border border-blue-500/20 uppercase italic tracking-[0.2em]">
-                    {result.language}
-                 </span>
-                 <span className="bg-green-600/10 text-green-400 text-[11px] font-black px-6 py-2.5 rounded-full border border-green-500/20 uppercase italic tracking-[0.2em]">
-                    {result.scenes.length} Phân Cảnh
-                 </span>
+        <div className="flex flex-col lg:flex-row gap-12 mt-10 max-w-[1600px] mx-auto px-6 animate-fade">
+          <div className="flex-1 space-y-16 pb-40">
+            {/* Kết quả Tóm tắt */}
+            <div className="bg-emerald-50/50 p-10 rounded-[3rem] luxury-border luxury-shadow relative overflow-hidden group">
+               <h3 className="text-lg font-black text-emerald-900 uppercase tracking-widest mb-6 flex items-center gap-3"><FileText size={20}/> Tóm tắt Video Link</h3>
+               <p className="text-emerald-900/80 italic font-medium leading-relaxed text-lg mb-8">{result.summary}</p>
+               <div className="flex flex-wrap gap-4">
+                  <div className="bg-white px-6 py-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                     <Clock size={18} className="text-emerald-600" />
+                     <span className="text-[12px] font-black uppercase text-emerald-950 tracking-widest">Tiêu chuẩn kịch bản: 6s / cảnh</span>
+                  </div>
                </div>
             </div>
-            <div className="flex flex-wrap gap-5">
-              <button onClick={() => exportData('txt')} className="glass px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-white/5 transition-all shadow-2xl">
-                <FileText size={20} /> Xuất Kịch Bản
-              </button>
-              <button onClick={() => exportData('json')} className="glass px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-white/5 transition-all shadow-2xl">
-                <FileJson size={20} /> Xuất JSON
-              </button>
-              <button onClick={() => setStep('idle')} className="bg-blue-600 text-white px-10 py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:bg-blue-500 transition-all shadow-[0_15px_50px_rgba(37,99,235,0.4)]">
-                <RefreshCw size={20} /> Biên Tập Mới
-              </button>
-            </div>
-          </div>
 
-          {/* Detailed Scenes List - Following User's Request Structure */}
-          <div className="space-y-20">
-             <div className="flex items-center justify-between">
-                <h3 className="text-4xl font-black uppercase italic flex items-center gap-10 text-white tracking-[0.3em]">
-                  <Scissors className="text-blue-500" size={56}/> DANH SÁCH PHÂN CẢNH
-                </h3>
-                <div className="h-px bg-white/5 flex-1 ml-12 hidden md:block" />
-             </div>
+            {/* Storyboard 6s */}
+            <div className="space-y-16">
+              <div className="flex items-center justify-between">
+                <h2 className="text-4xl font-serif font-black text-emerald-950 italic">Storyboard Chiến Binh Rau Củ (6s)</h2>
+                <button onClick={() => setStep('idle')} className="text-emerald-600 font-bold uppercase text-xs flex items-center gap-2 hover:underline">
+                  <RefreshCw size={14} /> Phân tích video khác
+                </button>
+              </div>
+              
+              {result.scenes.map((scene) => (
+                <div key={scene.id} className="bg-white luxury-border luxury-shadow rounded-[3.5rem] overflow-hidden group hover:-translate-y-1 transition-all duration-500">
+                  <div className="p-10 md:p-14 space-y-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-8">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-serif text-3xl font-black italic shadow-lg">
+                          {scene.id}
+                        </div>
+                        <h4 className="text-2xl font-serif font-black text-emerald-950 italic">{scene.visual}</h4>
+                      </div>
+                      <div className="bg-amber-100 text-amber-800 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <Clock size={14} /> 6 Seconds
+                      </div>
+                    </div>
 
-             <div className="grid grid-cols-1 gap-16">
-                {result.scenes.map((scene) => (
-                  <div key={scene.id} className="bg-[#0b101f]/90 backdrop-blur-3xl border border-white/5 rounded-[4rem] shadow-3xl overflow-hidden transition-all hover:border-blue-500/30">
-                    <div className="p-10 md:p-16 space-y-12 relative">
-                      <div className="absolute top-0 left-0 w-3 h-full bg-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.8)]" />
-                      
-                      <div className="flex flex-col xl:flex-row gap-12 items-start">
-                         {/* 1. Phân cảnh Section */}
-                         <div className="flex-1 space-y-6">
-                            <div className="flex items-center gap-6">
-                               <div className="w-20 h-20 rounded-[1.5rem] bg-blue-600 flex items-center justify-center text-white font-black text-3xl shadow-xl italic">
-                                 {scene.id}
-                               </div>
-                               <h4 className="text-2xl font-black text-white italic uppercase flex items-center gap-4">
-                                 Phân cảnh {scene.id}
-                               </h4>
-                            </div>
-                            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5 shadow-inner">
-                               <p className="text-lg text-gray-200 font-bold italic leading-relaxed">
-                                 {scene.visual}
-                               </p>
-                            </div>
-                         </div>
-
-                         {/* 2. Prompt Section */}
-                         <div className="flex-1 space-y-6">
-                            <span className="text-[13px] text-blue-500 font-black uppercase tracking-[0.5em] flex items-center gap-4 italic">
-                               <Cpu size={20} /> Prompt (Visual Description)
-                            </span>
-                            <div className="bg-black/60 p-8 rounded-[2rem] border border-blue-500/10 relative group">
-                               <p className="text-[15px] text-blue-200/80 font-mono italic leading-[1.8]">
-                                 {scene.cinematic_video_prompt}
-                               </p>
-                               <button 
-                                 onClick={() => copyToClipboard(scene.cinematic_video_prompt, `p-${scene.id}`)}
-                                 className="absolute top-6 right-6 p-3 bg-blue-500/10 rounded-xl hover:bg-blue-500/30 transition-all opacity-0 group-hover:opacity-100"
-                               >
-                                 <Copy size={18} className="text-blue-400" />
-                               </button>
-                            </div>
-                         </div>
-
-                         {/* 3. Vocal Section */}
-                         <div className="flex-1 space-y-6">
-                            <span className="text-[13px] text-green-500 font-black uppercase tracking-[0.5em] flex items-center gap-4 italic">
-                               <Volume2 size={20} /> Vocal (Voiceover)
-                            </span>
-                            <div className="bg-green-600/10 p-8 rounded-[2rem] border border-green-500/20 relative group">
-                               <p className="text-lg text-white font-black italic leading-relaxed">
-                                 "{scene.vietnamese_vocal}"
-                               </p>
-                               <button 
-                                 onClick={() => copyToClipboard(scene.vietnamese_vocal, `v-${scene.id}`)}
-                                 className="absolute top-6 right-6 p-3 bg-green-500/10 rounded-xl hover:bg-green-500/30 transition-all opacity-0 group-hover:opacity-100"
-                               >
-                                 <Copy size={18} className="text-green-400" />
-                               </button>
-                            </div>
-                         </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-6">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-emerald-800 flex items-center gap-3"><ImageIcon size={18} /> Prompt Hình Ảnh</span>
+                        <div className="bg-emerald-50/30 p-8 rounded-3xl border border-emerald-100 relative group/p min-h-[140px]">
+                          <p className="text-[14px] text-emerald-900/70 font-mono italic leading-relaxed">{scene.image_generation_prompt}</p>
+                          <button onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} className="absolute top-4 right-4 opacity-0 group-hover/p:opacity-100 transition-opacity"><Copy size={16}/></button>
+                        </div>
                       </div>
 
-                      {/* Optional Expandable Technical Details */}
-                      <button 
-                        onClick={() => setExpandedScene(expandedScene === scene.id ? null : scene.id)}
-                        className="w-full py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 text-[11px] font-black uppercase tracking-widest text-gray-500 flex items-center justify-center gap-4 transition-all"
-                      >
-                        {expandedScene === scene.id ? <><ChevronDown size={16} /> Thu gọn chi tiết kỹ thuật</> : <><ChevronRight size={16} /> Xem chi tiết kỹ thuật (Mood, Camera, Lighting...)</>}
-                      </button>
-
-                      {expandedScene === scene.id && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 animate-in slide-in-from-top">
-                           {[
-                             { label: 'Camera', val: scene.camera_angle, icon: Camera },
-                             { label: 'Lighting', val: scene.lighting_mood, icon: Sparkles },
-                             { label: 'Mood', val: scene.mood, icon: Wind },
-                             { label: 'Env', val: scene.background_setting, icon: Layers }
-                           ].map((item, idx) => (
-                             <div key={idx} className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
-                               <div className="flex items-center gap-3">
-                                 <item.icon size={16} className="text-blue-500" />
-                                 <span className="text-[9px] font-black text-gray-600 uppercase italic tracking-widest">{item.label}</span>
-                               </div>
-                               <p className="text-[12px] text-gray-300 font-bold italic truncate">{item.val}</p>
-                             </div>
-                           ))}
+                      <div className="space-y-6">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-amber-700 flex items-center gap-3"><MonitorPlay size={18} /> Video Prompt (6s Motion)</span>
+                        <div className="bg-amber-50/30 p-8 rounded-3xl border border-amber-100 relative group/v min-h-[140px]">
+                          <p className="text-[14px] text-emerald-950 font-bold italic leading-relaxed">{scene.cinematic_video_prompt}</p>
+                          <button onClick={() => copyToClipboard(scene.cinematic_video_prompt, `v-${scene.id}`)} className="absolute top-4 right-4 opacity-0 group-hover/v:opacity-100 transition-opacity"><Copy size={16}/></button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                ))}
-             </div>
+                </div>
+              ))}
+            </div>
           </div>
+          <Sidebar />
         </div>
       );
     }
+    return null;
+  };
+
+  const AdminPanel = () => {
+    if (!isAdminAuthenticated) {
+      return (
+        <div className="max-w-md mx-auto mt-24 p-10 bg-white luxury-border luxury-shadow rounded-[3rem] animate-fade">
+          <div className="text-center mb-10">
+            <div className="inline-flex p-5 rounded-3xl bg-emerald-50 mb-6">
+              <Lock size={40} className="text-emerald-600" />
+            </div>
+            <h2 className="text-2xl font-serif font-black text-emerald-950 uppercase tracking-tight">Admin Portal</h2>
+          </div>
+          <form onSubmit={handleAdminLogin} className="space-y-6">
+            <input type="password" value={adminPassInput} onChange={(e) => setAdminPassInput(e.target.value)} className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 outline-none" placeholder="Mật khẩu Admin..." required />
+            <button type="submit" className="w-full btn-luxury text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.3em]">Đăng nhập</button>
+            <button type="button" onClick={() => setView('home')} className="w-full text-gray-400 text-[10px] font-black uppercase tracking-widest mt-4">Quay lại</button>
+          </form>
+        </div>
+      );
+    }
+
+    return (
+      <div className="max-w-5xl mx-auto mt-10 p-10 bg-white luxury-border luxury-shadow rounded-[3rem] animate-fade">
+        <div className="flex justify-between items-center mb-12 border-b pb-8">
+          <h2 className="text-4xl font-serif font-black text-emerald-900">Quản Lý Ads Kiếm Tiền</h2>
+          <button onClick={() => setView('home')} className="bg-emerald-50 text-emerald-800 px-8 py-3 rounded-2xl font-black uppercase text-xs">Thoát Admin</button>
+        </div>
+        <div className="space-y-12">
+          <button onClick={addAd} className="w-full py-6 border-2 border-dashed border-emerald-200 rounded-3xl text-emerald-600 font-bold hover:bg-emerald-50 transition-all flex items-center justify-center gap-3">
+             <PlusCircle size={24} /> Thêm Banner Sidebar
+          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {ads.map(ad => (
+              <div key={ad.id} className="p-8 luxury-border rounded-3xl bg-gray-50/50 space-y-6 relative group">
+                <button onClick={() => removeAd(ad.id)} className="absolute top-6 right-6 text-red-300 hover:text-red-600"><Trash2 size={20} /></button>
+                <div className="space-y-4">
+                  <input value={ad.title} onChange={e => updateAd(ad.id, 'title', e.target.value)} className="w-full bg-white border border-gray-100 rounded-xl p-3 text-sm" placeholder="Tên dịch vụ/Sản phẩm" />
+                  <input value={ad.imageUrl} onChange={e => updateAd(ad.id, 'imageUrl', e.target.value)} className="w-full bg-white border border-gray-100 rounded-xl p-3 text-sm" placeholder="URL Hình ảnh banner" />
+                  <input value={ad.link} onChange={e => updateAd(ad.id, 'link', e.target.value)} className="w-full bg-white border border-gray-100 rounded-xl p-3 text-sm" placeholder="Link Affiliate / Link đích" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white font-['Inter'] selection:bg-blue-500/30">
-      <header className="px-12 py-10 flex justify-between items-center w-full border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-3xl z-40 shadow-2xl">
-        <div className="flex items-center gap-8 font-black tracking-tighter cursor-pointer group">
-          <div className="bg-blue-600 p-5 rounded-3xl shadow-3xl group-hover:rotate-[360deg] transition-transform duration-1000">
-            <Terminal size={32} className="text-white" />
+    <div className="min-h-screen bg-[#fdfdfd] text-[#1a1a1a]">
+      <header className="px-8 md:px-16 py-8 flex justify-between items-center w-full glass sticky top-0 z-50 luxury-border luxury-shadow">
+        <div onClick={() => setView('home')} className="flex items-center gap-4 cursor-pointer">
+          <Shield size={32} className="text-emerald-800" />
+          <div className="flex flex-col">
+            <span className="text-2xl font-serif font-black text-emerald-950 leading-none">PHV TOOL</span>
+            <span className="text-[10px] font-black text-gray-400 tracking-[0.4em] uppercase leading-none mt-1">6s AI Scripting</span>
           </div>
-          <span className="italic uppercase text-3xl hidden sm:inline tracking-tighter leading-none">
-            <span className="text-blue-500">PHV</span> AI EDITOR <span className="text-blue-600">PRO</span>
-          </span>
         </div>
-        
-        <div className="flex items-center gap-8">
-          <div className={`flex items-center gap-6 text-[12px] font-black uppercase tracking-[0.3em] px-10 py-4 rounded-full border shadow-3xl transition-all ${isApiKeyDetected ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-            {isApiKeyDetected ? <><ShieldCheck size={22} className="text-green-500" /> ENGINE ACTIVE</> : <><ShieldAlert size={22} className="text-red-500" /> AUTH ERROR</>}
-          </div>
-          <div className="hidden 2xl:flex gap-12 text-[12px] font-black text-gray-600 italic opacity-60 uppercase tracking-[0.4em]">
-             <div className="flex items-center gap-4"><Mail size={20}/> tonyhoaivu@gmail.com</div>
-             <div className="flex items-center gap-4"><Phone size={20}/> 0927099940</div>
-          </div>
+        <div className="flex items-center gap-10">
+           <div onClick={() => setView('admin')} className="cursor-pointer hover:bg-emerald-50 p-3 rounded-xl transition-all"><Settings size={22} className="text-emerald-800" /></div>
+           <div className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest border ${isApiKeyDetected ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+             {isApiKeyDetected ? '• ENGINE ACTIVE' : '• ENGINE ERROR'}
+           </div>
         </div>
       </header>
 
-      <main className="relative z-10 w-full mx-auto">{renderContent()}</main>
-      
-      <footer className="w-full py-24 px-12 border-t border-white/5 text-center mt-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-blue-600/5 blur-[200px] -z-10" />
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="space-y-4">
-             <h4 className="text-3xl font-black italic uppercase tracking-tighter">Bản quyền © <span className="text-blue-500">TonyHoaivu.Com</span></h4>
-             <p className="text-[12px] text-gray-600 font-black uppercase tracking-[1em] italic">AI Professional Video Editing Tools</p>
-          </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-10 opacity-50">
-            <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center justify-center gap-4 text-[14px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Mail size={22}/> tonyhoaivu@gmail.com</a>
-            <a href="tel:0927099940" className="flex items-center justify-center gap-4 text-[14px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Phone size={22}/> 0927099940</a>
-          </div>
-          <p className="text-[11px] text-gray-800 max-w-3xl mx-auto leading-relaxed uppercase font-black tracking-[0.6em] italic pt-12 border-t border-white/5">
-            Optimized for professional AI Video workflows: Grok-3, Sora, Runway Gen-3, Kling AI. 
-            Automated Scene Recognition powered by Gemini 3 Flash.
-          </p>
+      <main className="pb-32 px-6">
+        {view === 'admin' ? <AdminPanel /> : <HomeView />}
+      </main>
+
+      <footer className="py-24 px-12 border-t border-gray-100 bg-white text-center">
+        <h4 className="text-4xl font-serif font-black italic text-emerald-950 mb-4">PHV Generator Tool</h4>
+        <div className="flex justify-center gap-10 text-emerald-800/40 mb-12">
+           <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase"><Mail size={16}/> Email</a>
+           <a href="tel:0927099940" className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase"><Phone size={16}/> 0927099940</a>
         </div>
+        <p className="text-[11px] text-gray-300 uppercase font-black tracking-[0.5em] italic pt-12 border-t">{COPYRIGHT_INFO}</p>
       </footer>
     </div>
   );

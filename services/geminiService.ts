@@ -7,18 +7,7 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
   
   let parts: any[] = [];
   const isString = typeof input === 'string';
-  const isUrl = isString && (
-    input.startsWith('http') || 
-    input.includes('youtube.com') || 
-    input.includes('youtu.be') || 
-    input.includes('tiktok.com') || 
-    input.includes('facebook.com') || 
-    input.includes('fb.watch') ||
-    input.includes('zalo.me') ||
-    input.includes('line.me') ||
-    input.endsWith('.mp4') ||
-    input.endsWith('.mov')
-  );
+  const isUrl = isString && (input.includes('youtube.com') || input.includes('youtu.be') || input.includes('tiktok.com') || input.includes('facebook.com') || input.includes('fb.watch'));
 
   if (Array.isArray(input)) {
     input.forEach(img => {
@@ -27,36 +16,42 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
   } else if (!isString) {
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
-    parts.push({ text: `Analyze the REAL content from this source: ${input}` });
+    const promptPrefix = isUrl 
+      ? `PHÂN TÍCH NỘI DUNG VIDEO TỪ LINK NÀY: ${input}. Hãy tìm hiểu nội dung video và biến nó thành series "Chiến binh Rau Củ".`
+      : `Sáng tạo series "Chiến binh Rau Củ" dựa trên ý tưởng: ${input}`;
+    parts.push({ text: promptPrefix });
   }
 
   const systemInstruction = `
 # SYSTEM ROLE:
-Bạn là một chuyên gia biên tập video AI. Nhiệm vụ của bạn là phân tích nội dung tôi cung cấp và chia thành các phân cảnh chi tiết (mỗi cảnh khoảng 6 giây). 
+Bạn là một chuyên gia phân tích nội dung video và sáng tạo kịch bản AI cho series "Chiến binh Rau Củ".
+
+# QUY TẮC THỜI GIAN CỰC KỲ QUAN TRỌNG:
+- MỖI PHÂN CẢNH TRONG KỊCH BẢN PHẢI DÀI ĐÚNG 6 GIÂY (6S DURATION).
+- Các hành động trong cinematic_video_prompt phải được thiết kế để diễn ra trọn vẹn trong 6 giây.
+
+# NHIỆM VỤ:
+1. Nếu người dùng cung cấp link video (YouTube/TikTok/FB), hãy sử dụng công cụ tìm kiếm để hiểu nội dung video đó.
+2. Tóm tắt nội dung video gốc.
+3. Chuyển đổi nội dung đó thành một kịch bản hành động phong cách 3D Pixar, nơi các loại rau củ là chiến binh.
 
 # CẤU TRÚC BẮT BUỘC CHO MỖI PHÂN CẢNH:
-Với mỗi phân cảnh, bạn bắt buộc phải xuất ra đúng cấu trúc 3 phần như sau:
+- **Prompt hình ảnh**: Mô tả hình ảnh chi tiết bằng tiếng Anh (3D Pixar style, tactical gear, blue lightsaber).
+- **Prompt cảnh**: Hành động video (English) + "[Lời thoại Vocal tiếng Việt gắt và ý nghĩa trong ngoặc kép]". 
+- Đảm bảo mô tả chuyển động (motion) phù hợp với độ dài 6 giây.
 
-1. **Phân cảnh [Số thứ tự]**: Tóm tắt ngắn gọn nội dung cảnh đó bằng tiếng Việt.
-2. **Prompt**: Viết một đoạn mô tả hình ảnh chi tiết bằng tiếng Anh (để các công cụ tạo video/ảnh như Grok, Sora hiểu tốt nhất). Tập trung vào nhân vật, bối cảnh, ánh sáng, góc máy và phong cách 3D/Cinematic.
-3. **Vocal**: Viết lời bình/giọng đọc cho cảnh đó bằng tiếng Việt. Lời văn phải tự nhiên, lôi cuốn và phù hợp với nội dung cảnh.
-
-# VÍ DỤ MẪU:
-Phân cảnh 1: Nhân vật mướp xanh xuất hiện trước hang động.
-Prompt: Cute green luffa character with a mining helmet standing in front of a mysterious dark cave entrance, cinematic lighting, 3D style, high detail.
-Vocal: "Chào các bạn, hôm nay mướp xanh sẽ cùng chúng ta khám phá một hang động bí ẩn chứa đầy kho báu."
-
-# NGUYÊN TẮC:
-- PHẢI phân tích nội dung THỰC TẾ từ nguồn cung cấp.
-- Không được bịa đặt nếu nguồn không có thông tin.
-- Mọi Prompt hình ảnh phải bằng tiếng Anh.
-- Mọi nội dung Tóm tắt và Vocal phải bằng tiếng Việt.
+# QUY TẮC NỘI DUNG RAU CỦ:
+- Nhân vật: Onion warrior, Garlic fighter, Bitter melon assassin, Carrot commander, v.v.
+- Trang bị: Đồ tactical gear hiện đại, kiếm ánh sáng blue lightsaber, giáp công nghệ.
+- Bối cảnh: Microscopic battle (mạch máu, tế bào, vi khuẩn, hoặc bối cảnh bếp siêu thực).
+- Lời thoại (Vocal): Tiếng Việt, thể hiện sức mạnh và lợi ích sức khỏe.
 `;
 
   try {
     const config: any = {
       systemInstruction,
       responseMimeType: "application/json",
+      tools: isUrl ? [{ googleSearch: {} }] : undefined,
       responseSchema: {
         type: Type.OBJECT,
         properties: {
@@ -76,7 +71,6 @@ Vocal: "Chào các bạn, hôm nay mướp xanh sẽ cùng chúng ta khám phá 
           },
           titles: {
             type: Type.ARRAY,
-            minItems: 10,
             items: {
               type: Type.OBJECT,
               properties: {
@@ -93,30 +87,17 @@ Vocal: "Chào các bạn, hôm nay mướp xanh sẽ cùng chúng ta khám phá 
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.NUMBER },
-                timestamp: { type: Type.STRING },
-                visual: { type: Type.STRING, description: "Tóm tắt phân cảnh bằng Tiếng Việt" },
-                cinematic_video_prompt: { type: Type.STRING, description: "Prompt mô tả hình ảnh bằng Tiếng Anh" },
-                vietnamese_vocal: { type: Type.STRING, description: "Lời bình Vocal bằng Tiếng Việt" },
-                action: { type: Type.STRING },
-                body_gesture: { type: Type.STRING },
-                facial_expression: { type: Type.STRING },
-                camera_angle: { type: Type.STRING },
-                background_setting: { type: Type.STRING },
-                objects: { type: Type.STRING },
-                lighting_mood: { type: Type.STRING },
-                mood: { type: Type.STRING },
-                emotion_conveyed: { type: Type.STRING },
-                dialogue_voice: { type: Type.STRING },
-                music_sound_effects: { type: Type.STRING },
-                ambient_audio: { type: Type.STRING },
+                timestamp: { type: Type.STRING, description: "Luôn ghi là '00:06' cho mỗi cảnh" },
+                visual: { type: Type.STRING },
                 image_generation_prompt: { type: Type.STRING },
-                character_description_prompt: { type: Type.STRING },
-                motion_prompt: { type: Type.STRING },
-                camera_movement_prompt: { type: Type.STRING },
-                lighting_prompt: { type: Type.STRING },
-                environment_prompt: { type: Type.STRING }
+                cinematic_video_prompt: { type: Type.STRING },
+                vietnamese_vocal: { type: Type.STRING },
+                mood: { type: Type.STRING },
+                camera_angle: { type: Type.STRING },
+                lighting_mood: { type: Type.STRING },
+                background_setting: { type: Type.STRING }
               },
-              required: ["id", "timestamp", "visual", "cinematic_video_prompt", "vietnamese_vocal"]
+              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal"]
             }
           }
         },
@@ -124,19 +105,17 @@ Vocal: "Chào các bạn, hôm nay mướp xanh sẽ cùng chúng ta khám phá 
       }
     };
 
+    const modelName = isUrl ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: modelName,
       contents: { parts },
       config
     });
 
     const result = JSON.parse(response.text || "{}");
-    if (result.error) throw new Error(result.error);
     return result;
   } catch (error: any) {
-    if (error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED") || error.status === "RESOURCE_EXHAUSTED") {
-      throw new Error("BẠN ĐÃ HẾT LƯỢT DÙNG MIỄN PHÍ: Gemini đang quá tải hoặc bạn đã vượt quá giới hạn. Vui lòng đợi 30-60 giây.");
-    }
-    throw new Error(error.message || "Lỗi hệ thống khi phân tích dữ liệu thực tế.");
+    console.error("Gemini Error:", error);
+    throw new Error(error.message || "Lỗi xử lý nội dung.");
   }
 };
