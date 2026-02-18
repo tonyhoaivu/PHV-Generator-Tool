@@ -25,7 +25,9 @@ import {
   Globe,
   Clock,
   Camera,
-  CheckCircle2
+  CheckCircle2,
+  Music,
+  Move
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
@@ -39,7 +41,6 @@ const DEFAULT_ADS: Ad[] = [
   { id: '2', title: 'Bộ Prompt Grok-3', imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400', link: 'https://tonyhoaivu.com/prompts' }
 ];
 
-// --- Sub-component cho Form Đăng Nhập để tối ưu Performance ---
 const AdminLoginForm = ({ onLogin, onCancel, error }: { onLogin: (pass: string, remember: boolean) => void, onCancel: () => void, error: string | null }) => {
   const passRef = useRef<HTMLInputElement>(null);
   const [remember, setRemember] = useState(false);
@@ -107,6 +108,7 @@ const App: React.FC = () => {
   const [isApiKeyDetected, setIsApiKeyDetected] = useState<boolean>(false);
   const [ads, setAds] = useState<Ad[]>([]);
   const [appLogo, setAppLogo] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -236,7 +238,8 @@ const App: React.FC = () => {
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    // Logic copiedId handled elsewhere if needed for UI feedback
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const AppLogoDisplay = ({ size = 32 }: { size?: number }) => {
@@ -451,19 +454,57 @@ const App: React.FC = () => {
                           </div>
                           <div className="bg-amber-50 text-amber-800 px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-amber-100 flex items-center gap-3"><Clock size={16} /> 6 Seconds</div>
                         </div>
+
+                        {/* CHI TIẾT KỸ THUẬT PHÂN CẢNH */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
+                           <div className="flex gap-4 items-start">
+                              <div className="p-3 bg-white rounded-xl shadow-sm"><Move size={20} className="text-emerald-600" /></div>
+                              <div>
+                                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Chuyển động & Góc máy</p>
+                                 <p className="text-sm text-emerald-950 font-bold">{scene.action || "Đang bóc tách kỹ thuật..."}</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-4 items-start">
+                              <div className="p-3 bg-white rounded-xl shadow-sm"><Music size={20} className="text-amber-600" /></div>
+                              <div>
+                                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Âm thanh & SFX</p>
+                                 <p className="text-sm text-emerald-950 font-bold">{scene.music_sound_effects || "Đang phân tích audio..."}</p>
+                              </div>
+                           </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-14">
                           <div className="space-y-8">
-                            <span className="text-[14px] font-black uppercase tracking-[0.3em] text-emerald-800 flex items-center gap-4"><ImageIcon size={22} /> Prompt Hình Ảnh</span>
+                            <div className="flex justify-between items-center">
+                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-emerald-800 flex items-center gap-4"><ImageIcon size={22} /> Prompt Hình Ảnh</span>
+                               <button 
+                                  onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} 
+                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `ip-${scene.id}` ? 'bg-green-100 text-green-600' : 'bg-white text-emerald-600 hover:bg-emerald-50 border'}`}
+                               >
+                                  <Copy size={14} /> {copiedId === `ip-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}
+                               </button>
+                            </div>
                             <div className="bg-gray-50/50 p-10 rounded-[2.5rem] border border-gray-100 relative group/p min-h-[160px] luxury-shadow">
                               <p className="text-[15px] text-emerald-950 font-mono italic leading-relaxed">{scene.image_generation_prompt}</p>
-                              <button onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} className="absolute top-6 right-6 opacity-0 group-hover/p:opacity-100 transition-opacity p-2 bg-white rounded-lg shadow-sm"><Copy size={18} className="text-emerald-600" /></button>
                             </div>
                           </div>
                           <div className="space-y-8">
-                            <span className="text-[14px] font-black uppercase tracking-[0.3em] text-amber-700 flex items-center gap-4"><MonitorPlay size={22} /> Video Motion (6s)</span>
+                            <div className="flex justify-between items-center">
+                               <span className="text-[14px] font-black uppercase tracking-[0.3em] text-amber-700 flex items-center gap-4"><MonitorPlay size={22} /> Video Motion (6s)</span>
+                               <button 
+                                  onClick={() => copyToClipboard(`${scene.cinematic_video_prompt} ["${scene.vietnamese_vocal}"]`, `v-${scene.id}`)} 
+                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `v-${scene.id}` ? 'bg-amber-100 text-amber-800' : 'bg-white text-amber-600 hover:bg-amber-50 border'}`}
+                               >
+                                  <Copy size={14} /> {copiedId === `v-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}
+                               </button>
+                            </div>
                             <div className="bg-amber-50/20 p-10 rounded-[2.5rem] border border-amber-100 relative group/v min-h-[160px] luxury-shadow">
-                              <p className="text-[15px] text-emerald-950 font-black italic leading-relaxed">{scene.cinematic_video_prompt}</p>
-                              <button onClick={() => copyToClipboard(scene.cinematic_video_prompt, `v-${scene.id}`)} className="absolute top-6 right-6 opacity-0 group-hover/v:opacity-100 transition-opacity p-2 bg-white rounded-lg shadow-sm"><Copy size={18} className="text-amber-600" /></button>
+                              <p className="text-[15px] text-emerald-950 font-black italic leading-relaxed">
+                                {scene.cinematic_video_prompt} 
+                                {scene.vietnamese_vocal && (
+                                  <span className="block mt-4 text-emerald-600 font-black">["{scene.vietnamese_vocal}"]</span>
+                                )}
+                              </p>
                             </div>
                           </div>
                         </div>

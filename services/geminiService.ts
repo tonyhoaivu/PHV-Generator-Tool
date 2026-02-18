@@ -17,34 +17,30 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
     const promptPrefix = isUrl 
-      ? `PHÂN TÍCH NỘI DUNG VIDEO TỪ LINK NÀY: ${input}. Hãy tìm hiểu nội dung video và biến nó thành series "Chiến binh Rau Củ".`
+      ? `PHÂN TÍCH NỘI DUNG VIDEO TỪ LINK NÀY: ${input}. Hãy bóc tách kỹ thuật và biến nó thành series "Chiến binh Rau Củ".`
       : `Sáng tạo series "Chiến binh Rau Củ" dựa trên ý tưởng: ${input}`;
     parts.push({ text: promptPrefix });
   }
 
   const systemInstruction = `
 # SYSTEM ROLE:
-Bạn là một chuyên gia phân tích nội dung video và sáng tạo kịch bản AI cho series "Chiến binh Rau Củ".
+Bạn là một đạo diễn kỹ thuật và chuyên gia kịch bản AI xuất sắc, chuyên bóc tách video thành các phân cảnh 6 giây cực kỳ chi tiết cho series "Chiến binh Rau Củ" (phong cách 3D Pixar Tactical).
 
-# QUY TẮC THỜI GIAN CỰC KỲ QUAN TRỌNG:
-- MỖI PHÂN CẢNH TRONG KỊCH BẢN PHẢI DÀI ĐÚNG 6 GIÂY (6S DURATION).
-- Các hành động trong cinematic_video_prompt phải được thiết kế để diễn ra trọn vẹn trong 6 giây.
+# QUY TẮC PHÂN TÍCH 6 GIÂY (CỰC KỲ CHI TIẾT):
+Mọi phân cảnh phải được mô tả tỉ mỉ bao gồm:
+1. **Chuyển động (Movement)**: Mô tả chính xác nhân vật di chuyển thế nào trong 6 giây (ví dụ: "Lăn nhanh về phía trước, xoay người 360 độ và rút kiếm").
+2. **Góc máy (Camera)**: Sử dụng thuật ngữ điện ảnh (Close-up, Tracking shot, Dutch angle, Drone view).
+3. **Âm thanh (Audio/SFX)**: Mô tả âm thanh môi trường và hiệu ứng (tiếng kim loại va chạm, tiếng xì xào của lá, nhạc kịch tính).
+4. **Vocal Tiếng Việt (BẮT BUỘC)**: Câu nói tiếng Việt cực "gắt", mang tính cách nhân vật (ví dụ: "Bạn sợ tôi hằng? Cái hằng này là vũ khí diệt khuẩn và quét sạch mỡ máu cho bạn đấy!"). Lời thoại phải hài hước, truyền cảm hứng hoặc đe dọa kẻ thù một cách sáng tạo.
 
 # NHIỆM VỤ:
-1. Nếu người dùng cung cấp link video (YouTube/TikTok/FB), hãy sử dụng công cụ tìm kiếm để hiểu nội dung video đó.
-2. Tóm tắt nội dung video gốc.
-3. Chuyển đổi nội dung đó thành một kịch bản hành động phong cách 3D Pixar, nơi các loại rau củ là chiến binh.
+1. Phân tích nội dung gốc từ input (link hoặc ảnh).
+2. Chuyển đổi thành storyboard "Chiến binh Rau Củ". Nhân vật: Carrot Commander, Onion Ninja, Broccoli Tank, Mướp Warrior... trang bị Tactical Gear, Lightsaber, Súng nước áp lực cao.
+3. Mỗi cảnh phải đảm bảo tính khả thi để tạo video AI (Sora/Runway/Luma) với độ dài 6s.
 
-# CẤU TRÚC BẮT BUỘC CHO MỖI PHÂN CẢNH:
-- **Prompt hình ảnh**: Mô tả hình ảnh chi tiết bằng tiếng Anh (3D Pixar style, tactical gear, blue lightsaber).
-- **Prompt cảnh**: Hành động video (English) + "[Lời thoại Vocal tiếng Việt gắt và ý nghĩa trong ngoặc kép]". 
-- Đảm bảo mô tả chuyển động (motion) phù hợp với độ dài 6 giây.
-
-# QUY TẮC NỘI DUNG RAU CỦ:
-- Nhân vật: Onion warrior, Garlic fighter, Bitter melon assassin, Carrot commander, v.v.
-- Trang bị: Đồ tactical gear hiện đại, kiếm ánh sáng blue lightsaber, giáp công nghệ.
-- Bối cảnh: Microscopic battle (mạch máu, tế bào, vi khuẩn, hoặc bối cảnh bếp siêu thực).
-- Lời thoại (Vocal): Tiếng Việt, thể hiện sức mạnh và lợi ích sức khỏe.
+# CẤU TRÚC PHẢN HỒI:
+- summary: Tóm tắt ý tưởng tổng thể.
+- scenes: Danh sách các cảnh, mỗi cảnh mô tả sâu về hình ảnh, video prompt, chuyển động, âm thanh và lời thoại tiếng Việt.
 `;
 
   try {
@@ -87,7 +83,7 @@ Bạn là một chuyên gia phân tích nội dung video và sáng tạo kịch 
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.NUMBER },
-                timestamp: { type: Type.STRING, description: "Luôn ghi là '00:06' cho mỗi cảnh" },
+                timestamp: { type: Type.STRING },
                 visual: { type: Type.STRING },
                 image_generation_prompt: { type: Type.STRING },
                 cinematic_video_prompt: { type: Type.STRING },
@@ -95,9 +91,11 @@ Bạn là một chuyên gia phân tích nội dung video và sáng tạo kịch 
                 mood: { type: Type.STRING },
                 camera_angle: { type: Type.STRING },
                 lighting_mood: { type: Type.STRING },
-                background_setting: { type: Type.STRING }
+                background_setting: { type: Type.STRING },
+                action: { type: Type.STRING, description: "Chi tiết chuyển động trong 6s" },
+                music_sound_effects: { type: Type.STRING, description: "Mô tả âm thanh SFX và nhạc nền" }
               },
-              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal"]
+              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal", "action", "music_sound_effects"]
             }
           }
         },
