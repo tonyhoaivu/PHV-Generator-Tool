@@ -3,12 +3,23 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScriptAnalysisResult, AnalysisOptions } from "../types";
 
 export const analyzeVideoContent = async (input: string | { data: string, mimeType: string } | { data: string, mimeType: string }[], options: AnalysisOptions): Promise<ScriptAnalysisResult> => {
-  // Always obtain the API key exclusively from process.env.API_KEY
+  // Luôn lấy API Key từ process.env.API_KEY
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let parts: any[] = [];
   const isString = typeof input === 'string';
-  const isUrl = isString && (input.startsWith('http') || input.includes('youtube.com') || input.includes('tiktok.com') || input.includes('facebook.com'));
+  const isUrl = isString && (
+    input.startsWith('http') || 
+    input.includes('youtube.com') || 
+    input.includes('youtu.be') || 
+    input.includes('tiktok.com') || 
+    input.includes('facebook.com') || 
+    input.includes('fb.watch') ||
+    input.includes('zalo.me') ||
+    input.includes('line.me') ||
+    input.endsWith('.mp4') ||
+    input.endsWith('.mov')
+  );
 
   if (Array.isArray(input)) {
     input.forEach(img => {
@@ -22,24 +33,27 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
 
   const systemInstruction = `
 # SYSTEM ROLE:
-You are an advanced "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" powered by Gemini.
-Your specialty is extracting REAL data from visual/audio media for professional AI video storyboarding.
+Bạn là hệ thống AI "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" cao cấp.
+Nhiệm vụ: Phân tích nội dung THỰC TẾ từ link/ảnh và tạo kịch bản phân cảnh chi tiết cho AI Video (Grok, Sora, Runway).
 
-# STRICT SYSTEM RULES:
-1. ANALYSIS MUST BE REAL: You must describe only what is actually present in the provided links or images. 
-2. NO INVENTIONS: Do not invent storylines, characters, or scenes if they are not in the source.
-3. SCENE SPLIT: For videos, strictly split scenes into 6-second blocks (e.g., 00:00-00:06, 00:06-00:12).
-4. MULTIPLE IMAGES: If multiple images are provided, treat them as a sequential storyboard.
-5. PROMPT QUALITY: Every generated prompt (Grok, Camera, Motion, etc.) must be in English, ultra-detailed, cinematic, and ready for high-end AI video generators.
+# NGUYÊN TẮC NGHIÊM NGẶT:
+1. PHẢI phân tích nội dung THỰC TẾ. Tuyệt đối KHÔNG tự bịa ra cảnh hoặc nhân vật không có trong nguồn.
+2. Nếu không thể truy cập nội dung -> Trả về lỗi: "Unable to analyze source content."
+3. PHÂN CẢNH VIDEO: Chia cảnh chính xác mỗi 6 giây (00:00-00:06, 00:06-00:12,...).
+4. PHÂN TÍCH ẢNH: Mô tả chi tiết diện mạo, tư thế, môi trường, bố cục. Nếu nhiều ảnh -> treat as sequential storyboard.
 
-# OUTPUT STRUCTURE (Vietnamese for analysis, English for prompts):
-- Summary/Analysis: Vietnamese
-- Dialogue/Action/Visuals: Vietnamese
-- Titles: Vietnamese + English Prompts
-- All Generation Prompts: English
+# YÊU CẦU ĐẦU RA:
+- Phân tích & Tóm tắt: Tiếng Việt.
+- Bộ Prompt (Grok, Image, Motion, etc.): Tiếng Anh chuyên sâu, Cinematic, Ultra-detailed.
+- Tiêu đề: Tiếng Việt + Tiếng Anh (Tối thiểu 10 gợi ý với các loại: Viral, Emotional, Storytelling, SEO).
+- Hook: Tạo prompt ảnh Hook (EN) và text Thumbnail (VN).
 
-# ERROR HANDLING:
-If you cannot access the link or understand the content, return a JSON with a single property: {"error": "Unable to analyze source content."}
+# CẤU TRÚC PHÂN CẢNH (Mỗi cảnh 6s):
+- Scene number & Timestamp
+- Character actions, Body gestures, Facial expressions
+- Camera angle/movement, Background setting, Objects
+- Lighting & mood, Emotion, Dialogue/Voice
+- Sound effects, Ambient audio
 `;
 
   try {
@@ -58,19 +72,21 @@ If you cannot access the link or understand the content, return a JSON with a si
               image_prompt: { type: Type.STRING },
               thumbnail_text: { type: Type.STRING },
               emotional_highlight: { type: Type.STRING },
-              dramatic_lighting: { type: Type.STRING }
+              dramatic_lighting_description: { type: Type.STRING }
             },
-            required: ["image_prompt", "thumbnail_text", "emotional_highlight", "dramatic_lighting"]
+            required: ["image_prompt", "thumbnail_text", "emotional_highlight", "dramatic_lighting_description"]
           },
           titles: {
             type: Type.ARRAY,
+            minItems: 10,
             items: {
               type: Type.OBJECT,
               properties: {
                 vietnamese: { type: Type.STRING },
                 english_prompt: { type: Type.STRING },
                 category: { type: Type.STRING }
-              }
+              },
+              required: ["vietnamese", "english_prompt", "category"]
             }
           },
           scenes: {
@@ -82,25 +98,28 @@ If you cannot access the link or understand the content, return a JSON with a si
                 timestamp: { type: Type.STRING },
                 visual: { type: Type.STRING },
                 action: { type: Type.STRING },
-                gesture: { type: Type.STRING },
+                body_gesture: { type: Type.STRING },
                 facial_expression: { type: Type.STRING },
-                camera: { type: Type.STRING },
-                environment: { type: Type.STRING },
+                camera_angle: { type: Type.STRING },
+                background_setting: { type: Type.STRING },
                 objects: { type: Type.STRING },
-                lighting: { type: Type.STRING },
-                mood: { type: Type.STRING },
-                emotion: { type: Type.STRING },
-                dialogue: { type: Type.STRING },
-                sound_effects: { type: Type.STRING },
+                lighting_mood: { type: Type.STRING },
+                emotion_conveyed: { type: Type.STRING },
+                dialogue_voice: { type: Type.STRING },
+                music_sound_effects: { type: Type.STRING },
                 ambient_audio: { type: Type.STRING },
-                grok_video_prompt: { type: Type.STRING },
-                image_prompt: { type: Type.STRING },
-                character_description: { type: Type.STRING },
+                cinematic_video_prompt: { type: Type.STRING },
+                image_generation_prompt: { type: Type.STRING },
+                character_description_prompt: { type: Type.STRING },
                 motion_prompt: { type: Type.STRING },
                 camera_movement_prompt: { type: Type.STRING },
                 lighting_prompt: { type: Type.STRING },
                 environment_prompt: { type: Type.STRING }
-              }
+              },
+              required: [
+                "id", "timestamp", "visual", "action", "cinematic_video_prompt",
+                "character_description_prompt", "motion_prompt", "camera_movement_prompt"
+              ]
             }
           }
         },
@@ -113,7 +132,8 @@ If you cannot access the link or understand the content, return a JSON with a si
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Pro model for complex scene breakdown
+      // Chuyển sang Flash-preview để có hạn mức cao hơn và ổn định hơn cho bản miễn phí
+      model: 'gemini-3-flash-preview',
       contents: { parts: [...parts, { text: systemInstruction }] },
       config
     });
@@ -123,6 +143,16 @@ If you cannot access the link or understand the content, return a JSON with a si
     return result;
   } catch (error: any) {
     console.error("Gemini Error:", error);
-    throw new Error(error.message || "Lỗi hệ thống khi truy xuất dữ liệu.");
+    
+    // Xử lý lỗi Quota/429 một cách rõ ràng
+    if (error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED") || error.status === "RESOURCE_EXHAUSTED") {
+      throw new Error("BẠN ĐÃ HẾT LƯỢT DÙNG MIỄN PHÍ: Gemini đang quá tải hoặc bạn đã vượt quá giới hạn yêu cầu/phút. Vui lòng đợi 30-60 giây rồi nhấn thử lại.");
+    }
+    
+    if (error.message?.includes("API_KEY_INVALID")) {
+      throw new Error("API KEY KHÔNG HỢP LỆ: Vui lòng kiểm tra lại cấu hình mã API Key của bạn.");
+    }
+
+    throw new Error(error.message || "Lỗi hệ thống khi phân tích dữ liệu thực tế. Vui lòng thử lại sau.");
   }
 };

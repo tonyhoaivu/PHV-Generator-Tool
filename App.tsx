@@ -28,13 +28,15 @@ import {
   Camera,
   Layers,
   Wind,
-  Plus
+  Plus,
+  ArrowRight,
+  Scissors
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, GrokScene } from './types';
 import StepIndicator from './components/StepIndicator';
 
-const WATERMARK = "\n\nBản quyền © TonyHoaivu.Com | Email: tonyhoaivu@gmail.com | Phone: 0927099940";
+const COPYRIGHT_INFO = "Bản quyền © TonyHoaivu.Com | Email: tonyhoaivu@gmail.com | Phone: 0927099940";
 
 const App: React.FC = () => {
   const [inputText, setInputText] = useState('');
@@ -48,16 +50,17 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const key = process.env.API_KEY;
-    setIsApiKeyDetected(!!key && key !== 'undefined' && key.length > 10);
+    // Ưu tiên lấy từ process.env.API_KEY do build tool inject vào
+    const key = process.env.API_KEY || "";
+    setIsApiKeyDetected(!!key && key !== 'undefined' && key.length > 10 && !key.includes('PLACEHOLDER'));
   }, []);
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files;
     if (uploadedFiles) {
       Array.from(uploadedFiles).forEach((f: File) => {
-        if (f.size > 30 * 1024 * 1024) {
-          alert(`File ${f.name} quá lớn (tối đa 30MB).`);
+        if (f.size > 50 * 1024 * 1024) {
+          alert(`File ${f.name} quá lớn (tối đa 50MB).`);
           return;
         }
         const reader = new FileReader();
@@ -115,25 +118,25 @@ const App: React.FC = () => {
   const exportData = (format: 'txt' | 'json') => {
     if (!result) return;
     let content = "";
-    let fileName = `tonyhoaivu-storyboard-${Date.now()}.${format}`;
+    let fileName = `tonyhoaivu-analysis-${Date.now()}.${format}`;
     let type = "text/plain";
 
     if (format === 'json') {
-      content = JSON.stringify({ ...result, copyright: "TonyHoaivu.Com", watermark: WATERMARK.trim() }, null, 2);
+      content = JSON.stringify({ ...result, copyright: COPYRIGHT_INFO }, null, 2);
       type = "application/json";
     } else {
-      content = `VIDEO & IMAGE ANALYSIS STORYBOARD PRO\n`;
-      content += `=====================================\n`;
-      content += `Summary: ${result.summary}\n`;
+      content = `VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO\n`;
+      content += `===================================================\n`;
+      content += `Tóm tắt: ${result.summary}\n`;
       content += `Hook: ${result.hook_data.thumbnail_text}\n\n`;
-      content += `SCENES (6s SPLITS):\n`;
+      content += `DANH SÁCH PHÂN CẢNH (Mỗi 6 giây):\n`;
       result.scenes.forEach(s => {
-        content += `[Scene ${s.id}] (${s.timestamp})\n`;
-        content += `- Action: ${s.action}\n`;
-        content += `- Visual: ${s.visual}\n`;
-        content += `- Grok Prompt: ${s.grok_video_prompt}\n\n`;
+        content += `[Cảnh ${s.id}] (${s.timestamp})\n`;
+        content += `- Hành động: ${s.action}\n`;
+        content += `- Hình ảnh: ${s.visual}\n`;
+        content += `- Video Prompt (EN): ${s.cinematic_video_prompt}\n\n`;
       });
-      content += WATERMARK;
+      content += `\n${COPYRIGHT_INFO}`;
     }
 
     const a = document.createElement("a");
@@ -146,79 +149,83 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (step === 'idle') {
       return (
-        <div className="mt-12 text-center px-4 animate-in fade-in duration-700 max-w-4xl mx-auto">
-          <div className="mb-6 inline-flex items-center justify-center p-5 rounded-3xl bg-blue-600/10 border border-blue-500/20 shadow-2xl">
-            <Zap size={48} className="text-blue-400 animate-pulse" />
+        <div className="mt-12 text-center px-4 animate-in fade-in duration-1000 max-w-5xl mx-auto">
+          <div className="mb-8 inline-flex items-center justify-center p-6 rounded-[2rem] bg-blue-600/10 border border-blue-500/20 shadow-[0_0_50px_rgba(37,99,235,0.2)]">
+            <MonitorPlay size={56} className="text-blue-400 animate-pulse" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 uppercase tracking-tighter italic">
+          <h1 className="text-5xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter italic leading-none">
             VIDEO & IMAGE <span className="text-blue-500">→</span> PROMPT GENERATOR <span className="text-blue-600">PRO</span>
           </h1>
-          <p className="text-gray-400 text-sm font-medium italic opacity-80 mb-10 tracking-widest uppercase">
-            Deep Scene Analysis • Grok-3 Optimized • AI Storyboarding
+          <p className="text-gray-500 text-xs font-black italic opacity-80 mb-12 tracking-[0.6em] uppercase">
+            AI Real Content Analysis • Grok-3 Video Optimization • Cinematic Storyboarding
           </p>
           
-          <div className="glass p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-20">
-              <Cpu size={32} className="text-blue-500" />
+          <div className="glass p-10 md:p-16 rounded-[3.5rem] border border-white/5 shadow-3xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-10 opacity-10">
+              <Cpu size={48} className="text-blue-500" />
             </div>
 
-            <div className="space-y-8">
+            {!isApiKeyDetected && (
+              <div className="mb-8 p-6 rounded-[2rem] bg-red-500/10 border border-red-500/20 flex items-center gap-5 text-left animate-pulse">
+                <ShieldAlert size={32} className="text-red-500 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-black text-red-400 uppercase tracking-widest italic">Cảnh báo: Chưa cấu hình API Key</p>
+                  <p className="text-[11px] text-red-200/60 leading-relaxed font-medium">Hệ thống chưa tìm thấy khóa API hợp lệ. Vui lòng thiết lập GEMINI_API_KEY trong biến môi trường và REDEPLOY.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-10">
               {files.length === 0 ? (
                 <div className="relative group">
                   <textarea 
-                    className="w-full bg-black/50 border border-white/10 rounded-[2rem] p-8 text-white text-base focus:ring-4 focus:ring-blue-500/20 transition-all min-h-[200px] placeholder:italic placeholder:text-gray-600 shadow-inner resize-none font-medium"
-                    placeholder="Dán link Video (YouTube, TikTok, FB, MP4...) hoặc kịch bản chữ để phân tích thực tế..."
+                    className="w-full bg-black/60 border border-white/5 rounded-[2.5rem] p-10 text-white text-lg focus:ring-4 focus:ring-blue-500/20 transition-all min-h-[220px] placeholder:italic placeholder:text-gray-700 shadow-inner resize-none font-medium leading-relaxed"
+                    placeholder="Dán link Video (YT, TikTok, FB, Zalo...) hoặc kịch bản để phân tích nội dung thực tế..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                   />
-                  <div className="absolute bottom-6 right-8 flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest italic pointer-events-none opacity-50">
-                    <ExternalLink size={12} /> Real content extraction mode
+                  <div className="absolute bottom-8 right-10 flex items-center gap-2 text-[10px] text-gray-600 font-black uppercase tracking-widest italic pointer-events-none opacity-40">
+                    <Zap size={12} /> Deep Multimodal Extraction
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 bg-black/40 rounded-[2rem] border border-dashed border-white/10">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 p-8 bg-black/40 rounded-[2.5rem] border border-dashed border-white/10">
                   {files.map((f, i) => (
-                    <div key={i} className="relative group aspect-square bg-[#0f172a] rounded-2xl flex flex-col items-center justify-center p-4 border border-white/5 hover:border-blue-500/30 transition-all overflow-hidden shadow-2xl">
-                      {f.mimeType.includes('video') ? <FileVideo size={40} className="text-blue-400" /> : <ImageIcon size={40} className="text-purple-400" />}
-                      <span className="text-[10px] font-bold text-gray-400 mt-3 truncate w-full text-center px-2 italic">{f.name}</span>
-                      <button onClick={() => removeFile(i)} className="absolute top-2 right-2 p-1.5 bg-red-600/90 rounded-full hover:bg-red-500 transition-colors shadow-lg">
-                        <X size={12} />
+                    <div key={i} className="relative group aspect-square bg-[#0a0f1d] rounded-3xl flex flex-col items-center justify-center p-6 border border-white/5 hover:border-blue-500/30 transition-all overflow-hidden shadow-2xl">
+                      {f.mimeType.includes('video') ? <FileVideo size={48} className="text-blue-400" /> : <ImageIcon size={48} className="text-purple-400" />}
+                      <span className="text-[10px] font-black text-gray-500 mt-4 truncate w-full text-center px-4 italic uppercase">{f.name}</span>
+                      <button onClick={() => removeFile(i)} className="absolute top-3 right-3 p-2 bg-red-600/90 rounded-full hover:bg-red-600 transition-colors shadow-lg">
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square bg-blue-600/5 border border-dashed border-blue-500/20 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-blue-600/10 transition-all group"
+                    className="aspect-square bg-blue-600/5 border border-dashed border-blue-500/20 rounded-3xl flex flex-col items-center justify-center gap-4 hover:bg-blue-600/10 transition-all group"
                   >
-                    <Plus size={32} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-widest">Thêm File</span>
+                    <Plus size={40} className="text-blue-500 group-hover:scale-110 transition-transform duration-500" />
+                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Upload Media</span>
                   </button>
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-5">
+              <div className="flex flex-col sm:flex-row gap-6">
                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" multiple onChange={handleFileUpload} />
                 <button 
                   onClick={() => fileInputRef.current?.click()} 
-                  className="flex-1 px-10 py-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase text-[12px] tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl"
+                  className="flex-1 px-12 py-7 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 text-white font-black uppercase text-[13px] tracking-widest transition-all flex items-center justify-center gap-4 active:scale-95 shadow-2xl"
                 >
-                  <Upload size={20} /> Upload Image/Video
+                  <Upload size={22} /> Chọn File Nguồn
                 </button>
                 <button 
                   onClick={handleProcess} 
                   disabled={(!inputText && files.length === 0) || !isApiKeyDetected} 
-                  className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:opacity-50 text-white font-black px-12 py-6 rounded-2xl text-[12px] uppercase tracking-[0.2em] transition-all shadow-[0_20px_50px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 active:scale-95"
+                  className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:opacity-50 text-white font-black px-12 py-7 rounded-3xl text-[13px] uppercase tracking-[0.3em] transition-all shadow-[0_25px_60px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 active:scale-95"
                 >
-                  <Sparkles size={20} className="animate-pulse" /> RUN ANALYSIS ENGINE
+                  <Sparkles size={22} className="animate-pulse" /> PHÂN TÍCH NỘI DUNG (AI)
                 </button>
               </div>
             </div>
-          </div>
-          
-          <div className="mt-12 flex justify-center items-center gap-10 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
-             <div className="flex items-center gap-2"><ImageIcon size={16}/> JPG/PNG</div>
-             <div className="flex items-center gap-2"><FileVideo size={16}/> MP4/MOV</div>
-             <div className="flex items-center gap-2"><MonitorPlay size={16}/> YT/TikTok</div>
           </div>
         </div>
       );
@@ -228,12 +235,12 @@ const App: React.FC = () => {
       return (
         <div className="max-w-xl mx-auto mt-24 px-4">
           <div className="text-center mb-16">
-            <div className="relative inline-block mb-10">
-               <RefreshCw size={72} className="text-blue-500 animate-spin-slow opacity-20" />
-               <Zap size={32} className="text-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+            <div className="relative inline-block mb-12">
+               <RefreshCw size={84} className="text-blue-500 animate-spin-slow opacity-10" />
+               <Zap size={42} className="text-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
             </div>
-            <h3 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic mb-4">Processing Engine</h3>
-            <p className="text-sm text-gray-500 italic max-w-sm mx-auto leading-relaxed uppercase tracking-widest font-bold">Extracting real visual data & generating detailed storyboards...</p>
+            <h3 className="text-3xl font-black text-white uppercase tracking-[0.5em] italic mb-6">Analytic Core</h3>
+            <p className="text-[11px] text-gray-500 italic max-w-sm mx-auto leading-relaxed uppercase tracking-[0.4em] font-black">Extracting real visual metadata & splitting scenes every 6 seconds...</p>
           </div>
           <StepIndicator currentStep={step} />
         </div>
@@ -242,14 +249,14 @@ const App: React.FC = () => {
 
     if (step === 'error') {
       return (
-        <div className="max-w-xl mx-auto mt-24 text-center px-12 py-16 glass rounded-[3rem] border border-red-500/20 shadow-2xl animate-in zoom-in">
-          <AlertCircle size={72} className="text-red-500 mx-auto mb-8 shadow-red-500/20 shadow-2xl" />
-          <h2 className="text-white font-black uppercase text-xl mb-6 tracking-widest italic">Source Access Denied</h2>
-          <p className="text-red-400 text-base italic font-medium mb-12 leading-relaxed bg-red-500/5 p-8 rounded-3xl border border-red-500/10 shadow-inner">
-            "{error}"
+        <div className="max-w-xl mx-auto mt-24 text-center px-12 py-16 glass rounded-[3.5rem] border border-red-500/20 shadow-2xl animate-in zoom-in">
+          <AlertCircle size={84} className="text-red-500 mx-auto mb-10 shadow-red-500/20 shadow-2xl" />
+          <h2 className="text-white font-black uppercase text-2xl mb-6 tracking-widest italic">Hệ Thống Tạm Ngừng</h2>
+          <p className="text-red-400 text-base italic font-bold mb-14 leading-relaxed bg-red-500/5 p-10 rounded-[2.5rem] border border-red-500/10 shadow-inner">
+            {error}
           </p>
-          <button onClick={() => setStep('idle')} className="w-full bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 rounded-2xl font-black text-[12px] uppercase tracking-widest transition-all shadow-2xl active:scale-95">
-            Back to Dashboard
+          <button onClick={() => setStep('idle')} className="w-full bg-blue-600 hover:bg-blue-500 text-white px-12 py-7 rounded-3xl font-black text-[13px] uppercase tracking-widest transition-all shadow-2xl active:scale-95">
+            Thử Lại
           </button>
         </div>
       );
@@ -257,67 +264,69 @@ const App: React.FC = () => {
 
     if (result) {
       return (
-        <div className="w-full mt-8 px-6 pb-40 space-y-16 max-w-[1500px] mx-auto animate-in fade-in duration-700">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-10 border-b border-white/5 pb-10">
-            <div className="space-y-3 text-center md:text-left">
-               <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4">
-                <MonitorPlay className="text-blue-500" size={36}/> SCENE ANALYSIS <span className="text-blue-500">PRO</span>
+        <div className="w-full mt-10 px-6 pb-48 space-y-20 max-w-[1600px] mx-auto animate-in fade-in duration-1000">
+          {/* Header Actions */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12 border-b border-white/5 pb-12">
+            <div className="space-y-4 text-center md:text-left">
+               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter flex items-center gap-6 justify-center md:justify-start">
+                <MonitorPlay className="text-blue-500" size={48}/> SCENE BREAKDOWN <span className="text-blue-500">PRO</span>
                </h2>
-               <div className="flex flex-wrap gap-4 items-center justify-center md:justify-start">
-                 <span className="bg-blue-600/10 text-blue-400 text-[11px] font-black px-5 py-2 rounded-full border border-blue-500/20 uppercase italic tracking-widest">
+               <div className="flex flex-wrap gap-5 items-center justify-center md:justify-start">
+                 <span className="bg-blue-600/10 text-blue-400 text-[11px] font-black px-6 py-2.5 rounded-full border border-blue-500/20 uppercase italic tracking-[0.2em]">
                     {result.language}
                  </span>
-                 <span className="bg-green-600/10 text-green-400 text-[11px] font-black px-5 py-2 rounded-full border border-green-500/20 uppercase italic tracking-widest">
-                    {result.scenes.length} Blocks (6s Splits)
+                 <span className="bg-green-600/10 text-green-400 text-[11px] font-black px-6 py-2.5 rounded-full border border-green-500/20 uppercase italic tracking-[0.2em]">
+                    {result.scenes.length} Phân Cảnh (6s)
                  </span>
                </div>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <button onClick={() => exportData('txt')} className="glass px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 hover:bg-white/5 transition-all shadow-xl">
-                <FileText size={18} /> TXT Storyboard
+            <div className="flex flex-wrap gap-5">
+              <button onClick={() => exportData('txt')} className="glass px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-white/5 transition-all shadow-2xl">
+                <FileText size={20} /> Xuất TXT
               </button>
-              <button onClick={() => exportData('json')} className="glass px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 hover:bg-white/5 transition-all shadow-xl">
-                <FileJson size={18} /> JSON Data
+              <button onClick={() => exportData('json')} className="glass px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-white/5 transition-all shadow-2xl">
+                <FileJson size={20} /> Xuất JSON
               </button>
-              <button onClick={() => setStep('idle')} className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-blue-500 transition-all shadow-[0_10px_40px_rgba(37,99,235,0.4)]">
-                <RefreshCw size={18} /> New Session
+              <button onClick={() => setStep('idle')} className="bg-blue-600 text-white px-10 py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:bg-blue-500 transition-all shadow-[0_15px_50px_rgba(37,99,235,0.4)]">
+                <RefreshCw size={20} /> Làm Mới
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
              <div className="lg:col-span-8 space-y-12">
-                <div className="glass p-12 rounded-[3.5rem] space-y-10 relative overflow-hidden group/box shadow-2xl">
-                  <div className="absolute top-0 right-0 p-10 opacity-5 group-hover/box:scale-110 transition-transform duration-1000">
-                    <Layers size={120} className="text-blue-500" />
+                {/* Analysis Box */}
+                <div className="glass p-12 md:p-16 rounded-[4rem] space-y-12 relative overflow-hidden group/box shadow-3xl">
+                  <div className="absolute top-0 right-0 p-12 opacity-5 group-hover/box:scale-110 transition-transform duration-1000">
+                    <Layers size={140} className="text-blue-500" />
                   </div>
-                  <h4 className="text-blue-500 font-black text-[13px] uppercase tracking-[0.5em] flex items-center gap-5 italic">
-                    <Info size={22}/> Content Metadata Summary
+                  <h4 className="text-blue-500 font-black text-[14px] uppercase tracking-[0.6em] flex items-center gap-6 italic">
+                    <Info size={24}/> Phân Tích Nội Dung Thực Tế
                   </h4>
-                  <div className="space-y-8 relative">
-                    <div className="p-8 bg-blue-600/5 rounded-3xl border border-blue-500/10 shadow-inner">
-                      <p className="text-gray-200 text-lg leading-relaxed italic font-medium">
+                  <div className="space-y-10 relative">
+                    <div className="p-10 bg-blue-600/5 rounded-[2.5rem] border border-blue-500/10 shadow-inner">
+                      <p className="text-gray-200 text-xl leading-[1.8] italic font-medium">
                         "{result.summary}"
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                       <div className="space-y-4">
-                          <span className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-blue-600" /> Detected Characters
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 pt-4">
+                       <div className="space-y-5">
+                          <span className="text-[12px] text-gray-600 font-black uppercase tracking-[0.4em] flex items-center gap-4 italic">
+                            <div className="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_10px_blue]" /> Nhân vật
                           </span>
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-wrap gap-4">
                             {result.detected_characters.map((c, i) => (
-                              <span key={i} className="bg-white/5 px-4 py-1.5 rounded-xl text-[12px] font-bold text-gray-300 italic border border-white/5">#{c}</span>
+                              <span key={i} className="bg-white/5 px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 italic border border-white/5">#{c}</span>
                             ))}
                           </div>
                        </div>
-                       <div className="space-y-4">
-                          <span className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-blue-600" /> Detected Locations
+                       <div className="space-y-5">
+                          <span className="text-[12px] text-gray-600 font-black uppercase tracking-[0.4em] flex items-center gap-4 italic">
+                            <div className="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_10px_blue]" /> Bối cảnh
                           </span>
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-wrap gap-4">
                             {result.detected_locations.map((l, i) => (
-                              <span key={i} className="bg-white/5 px-4 py-1.5 rounded-xl text-[12px] font-bold text-gray-300 italic border border-white/5">@{l}</span>
+                              <span key={i} className="bg-white/5 px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 italic border border-white/5">@{l}</span>
                             ))}
                           </div>
                        </div>
@@ -325,23 +334,24 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="glass p-12 rounded-[3.5rem] space-y-10 shadow-2xl">
-                  <h4 className="text-orange-500 font-black text-[13px] uppercase tracking-[0.5em] flex items-center gap-5 italic">
-                    <Sparkles size={22}/> Title Generation (10 Suggestions)
+                {/* Title Box */}
+                <div className="glass p-12 md:p-16 rounded-[4rem] space-y-12 shadow-3xl">
+                  <h4 className="text-orange-500 font-black text-[14px] uppercase tracking-[0.6em] flex items-center gap-6 italic">
+                    <Sparkles size={24}/> Đề Xuất 10 Tiêu Đề Viral (SEO)
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {result.titles.map((t, i) => (
-                      <div key={i} className="group p-6 rounded-[2rem] bg-[#0f172a] border border-white/5 hover:border-orange-500/40 transition-all space-y-4 relative shadow-lg">
+                      <div key={i} className="group p-8 rounded-[2.5rem] bg-[#0d1324] border border-white/5 hover:border-orange-500/40 transition-all space-y-5 relative shadow-xl">
                         <div className="flex justify-between items-start">
-                          <span className="text-[9px] font-black bg-orange-500/10 text-orange-400 px-3 py-1 rounded-lg uppercase tracking-widest italic">
+                          <span className="text-[10px] font-black bg-orange-500/10 text-orange-400 px-4 py-1.5 rounded-xl uppercase tracking-[0.2em] italic">
                             {t.category}
                           </span>
-                          <button onClick={() => copyToClipboard(t.vietnamese, `title-vn-${i}`)} className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/5 p-2 rounded-full hover:bg-white/10">
-                            <Copy size={14} className="text-gray-400" />
+                          <button onClick={() => copyToClipboard(t.vietnamese, `title-vn-${i}`)} className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/5 p-2.5 rounded-full hover:bg-white/10">
+                            <Copy size={16} className="text-gray-400" />
                           </button>
                         </div>
-                        <p className="font-bold text-white text-base italic leading-snug">"{t.vietnamese}"</p>
-                        <p className="text-[11px] text-gray-600 font-mono line-clamp-2 italic leading-relaxed">Prompt: {t.english_prompt}</p>
+                        <p className="font-bold text-white text-lg italic leading-snug">"{t.vietnamese}"</p>
+                        <p className="text-[11px] text-gray-600 font-mono line-clamp-2 italic leading-relaxed opacity-60">Prompt: {t.english_prompt}</p>
                       </div>
                     ))}
                   </div>
@@ -349,36 +359,37 @@ const App: React.FC = () => {
              </div>
 
              <div className="lg:col-span-4 space-y-12">
-               <div className="glass p-12 rounded-[3.5rem] space-y-10 border-l-[12px] border-l-red-600 shadow-red-600/10 shadow-2xl sticky top-32">
-                  <h4 className="text-red-500 font-black text-[13px] uppercase tracking-[0.5em] flex items-center gap-5 italic">
-                    <Wind size={22}/> Viral Hook & Thumbnail
+               {/* Hook Box */}
+               <div className="glass p-12 rounded-[3.5rem] space-y-12 border-l-[16px] border-l-red-600 shadow-red-600/10 shadow-3xl sticky top-40">
+                  <h4 className="text-red-500 font-black text-[14px] uppercase tracking-[0.6em] flex items-center gap-6 italic">
+                    <Wind size={24}/> Viral Hook & Thumbnail
                   </h4>
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <span className="text-[11px] text-gray-500 font-black uppercase tracking-widest italic">Hook Thumbnail Text (VN)</span>
-                      <p className="text-2xl font-black text-white italic leading-[1.1] tracking-tighter">"{result.hook_data.thumbnail_text}"</p>
+                  <div className="space-y-10">
+                    <div className="space-y-5">
+                      <span className="text-[12px] text-gray-600 font-black uppercase tracking-[0.4em] italic">Text Thumbnail (VN)</span>
+                      <p className="text-3xl font-black text-white italic leading-none tracking-tighter">"{result.hook_data.thumbnail_text}"</p>
                     </div>
-                    <div className="space-y-4 pt-8 border-t border-white/5">
+                    <div className="space-y-5 pt-10 border-t border-white/5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-red-400 font-black uppercase tracking-widest flex items-center gap-2">
-                           <Camera size={14}/> Image Prompt (EN)
+                        <span className="text-[11px] text-red-400 font-black uppercase tracking-widest flex items-center gap-3">
+                           <Camera size={16}/> Image Prompt (EN)
                         </span>
-                        <button onClick={() => copyToClipboard(result.hook_data.image_prompt, 'hook-prompt')} className="p-3 bg-red-600/10 rounded-2xl hover:bg-red-600/20 transition-all border border-red-500/20">
-                          <Copy size={16} className="text-red-400" />
+                        <button onClick={() => copyToClipboard(result.hook_data.image_prompt, 'hook-p')} className="p-4 bg-red-600/10 rounded-2xl hover:bg-red-600/20 transition-all border border-red-500/20">
+                          <Copy size={18} className="text-red-400" />
                         </button>
                       </div>
-                      <p className="text-[12px] text-gray-400 leading-relaxed font-mono italic p-6 bg-black/60 rounded-2xl border border-white/5 shadow-inner">
+                      <p className="text-[13px] text-gray-400 leading-relaxed font-mono italic p-8 bg-black/60 rounded-[2rem] border border-white/5 shadow-inner">
                         {result.hook_data.image_prompt}
                       </p>
                     </div>
-                    <div className="space-y-4 pt-4">
-                      <div className="flex items-center gap-4 text-[12px] text-gray-400 italic bg-white/5 p-4 rounded-xl">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_red]" />
-                        <span className="font-bold">Highlight:</span> {result.hook_data.emotional_highlight}
+                    <div className="space-y-5 pt-4">
+                      <div className="flex items-center gap-5 text-[13px] text-gray-400 italic bg-white/5 p-5 rounded-2xl">
+                        <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse shadow-[0_0_12px_red]" />
+                        <span className="font-black uppercase text-[10px] tracking-widest opacity-50">Highlight:</span> {result.hook_data.emotional_highlight}
                       </div>
-                      <div className="flex items-center gap-4 text-[12px] text-gray-400 italic bg-white/5 p-4 rounded-xl">
-                        <div className="w-2.5 h-2.5 rounded-full bg-orange-600 animate-pulse shadow-[0_0_10px_orange]" />
-                        <span className="font-bold">Lighting:</span> {result.hook_data.dramatic_lighting}
+                      <div className="flex items-center gap-5 text-[13px] text-gray-400 italic bg-white/5 p-5 rounded-2xl">
+                        <div className="w-3 h-3 rounded-full bg-orange-600 animate-pulse shadow-[0_0_12px_orange]" />
+                        <span className="font-black uppercase text-[10px] tracking-widest opacity-50">Lighting:</span> {result.hook_data.dramatic_lighting_description}
                       </div>
                     </div>
                   </div>
@@ -386,123 +397,132 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          <div className="space-y-16">
+          {/* Detailed Scenes List */}
+          <div className="space-y-20">
              <div className="flex items-center justify-between">
-                <h3 className="text-3xl font-black uppercase italic flex items-center gap-8 text-white tracking-[0.2em]">
-                  <MonitorPlay className="text-blue-500" size={48}/> Storyboard 6s
+                <h3 className="text-4xl font-black uppercase italic flex items-center gap-10 text-white tracking-[0.3em]">
+                  <Scissors className="text-blue-500" size={56}/> Phân Cảnh 6 Giây
                 </h3>
-                <div className="h-px bg-white/10 flex-1 ml-10 hidden md:block" />
+                <div className="h-px bg-white/5 flex-1 ml-12 hidden md:block" />
              </div>
 
-             <div className="space-y-12">
+             <div className="space-y-16">
                 {result.scenes.map((scene) => (
-                  <div key={scene.id} className="bg-[#0f172a]/90 backdrop-blur-3xl border border-white/5 rounded-[4rem] shadow-2xl overflow-hidden group/scene transition-all hover:border-blue-500/30">
-                    <div className="p-10 md:p-16 flex flex-col lg:flex-row gap-16 relative">
-                      <div className="absolute top-0 left-0 w-2 h-full bg-blue-600 shadow-[0_0_30px_rgba(37,99,235,0.6)]" />
+                  <div key={scene.id} className="bg-[#0b101f]/90 backdrop-blur-3xl border border-white/5 rounded-[4.5rem] shadow-3xl overflow-hidden group/scene transition-all hover:border-blue-500/30">
+                    <div className="p-12 md:p-20 flex flex-col xl:flex-row gap-20 relative">
+                      <div className="absolute top-0 left-0 w-3 h-full bg-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.8)]" />
                       
-                      {/* Technical Specs */}
-                      <div className="lg:w-1/4 space-y-8 border-r border-white/5 pr-12">
-                        <div className="flex items-center gap-6">
-                          <div className="w-24 h-24 rounded-[2rem] bg-blue-600 flex items-center justify-center text-white font-black text-4xl shadow-2xl shadow-blue-600/40 italic">
+                      {/* Left: Metadata */}
+                      <div className="xl:w-1/4 space-y-10 border-r border-white/5 pr-12">
+                        <div className="flex items-center gap-8">
+                          <div className="w-28 h-28 rounded-[2.5rem] bg-blue-600 flex items-center justify-center text-white font-black text-5xl shadow-[0_0_40px_rgba(37,99,235,0.4)] italic">
                             {scene.id}
                           </div>
                           <div className="space-y-1">
-                            <span className="block text-3xl font-black text-blue-400 tracking-tighter italic">{scene.timestamp}</span>
-                            <span className="block text-[11px] text-gray-500 font-bold uppercase tracking-[0.5em] italic">Standard Block</span>
+                            <span className="block text-4xl font-black text-blue-400 tracking-tighter italic leading-none">{scene.timestamp}</span>
+                            <span className="block text-[11px] text-gray-600 font-black uppercase tracking-[0.6em] italic">6s Segment</span>
                           </div>
                         </div>
 
-                        <div className="space-y-6 pt-10">
+                        <div className="space-y-6 pt-12">
                            {[
-                             { label: 'Camera Angle', val: scene.camera, icon: Camera },
-                             { label: 'Lighting Style', val: scene.lighting, icon: Sparkles },
-                             { label: 'Environment', val: scene.environment, icon: Layers },
-                             { label: 'Mood/Tone', val: scene.mood, icon: Wind },
-                             { label: 'Core Emotion', val: scene.emotion, icon: Zap }
+                             { label: 'Camera', val: scene.camera_angle, icon: Camera },
+                             { label: 'Lighting', val: scene.lighting_mood, icon: Sparkles },
+                             { label: 'Env', val: scene.background_setting, icon: Layers },
+                             { label: 'Mood', val: scene.mood, icon: Wind },
+                             { label: 'Emotion', val: scene.emotion_conveyed, icon: Zap }
                            ].map((item, idx) => (
-                             <div key={idx} className="flex items-center gap-5 group/item bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
+                             <div key={idx} className="flex items-center gap-6 group/item bg-white/5 p-5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
                                <div className="p-3 bg-blue-600/10 rounded-xl">
-                                 <item.icon size={18} className="text-blue-400 group-hover/item:scale-110 transition-transform" />
+                                 <item.icon size={20} className="text-blue-400 group-hover/item:scale-110 transition-transform duration-500" />
                                </div>
-                               <div className="space-y-0.5">
-                                 <span className="block text-[9px] text-gray-500 uppercase font-black tracking-widest italic">{item.label}</span>
-                                 <span className="block text-[12px] text-gray-200 font-bold italic truncate max-w-[150px]">{item.val}</span>
+                               <div className="space-y-1">
+                                 <span className="block text-[10px] text-gray-600 uppercase font-black tracking-widest italic">{item.label}</span>
+                                 <span className="block text-[13px] text-gray-200 font-bold italic truncate max-w-[160px]">{item.val}</span>
                                </div>
                              </div>
                            ))}
                         </div>
                       </div>
 
-                      {/* Analysis & Content */}
-                      <div className="lg:w-3/4 space-y-12">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            <div className="space-y-5">
-                               <span className="text-[12px] text-gray-400 font-black uppercase tracking-[0.4em] flex items-center gap-4 italic">
-                                 <div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-[0_0_8px_blue]" /> Visual & Action (VN)
+                      {/* Right: Detailed Content & Prompts */}
+                      <div className="xl:w-3/4 space-y-16">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                            <div className="space-y-6">
+                               <span className="text-[13px] text-gray-500 font-black uppercase tracking-[0.5em] flex items-center gap-5 italic">
+                                 <div className="w-3 h-3 bg-blue-600 rounded-full shadow-[0_0_10px_blue]" /> Visual & Action
                                </span>
-                               <div className="bg-black/50 p-8 rounded-[2rem] border border-white/5 shadow-inner min-h-[140px] flex items-center">
-                                 <p className="text-base text-gray-200 font-semibold italic leading-relaxed">
+                               <div className="bg-black/60 p-10 rounded-[2.5rem] border border-white/5 shadow-inner min-h-[160px] flex items-center">
+                                 <p className="text-lg text-gray-200 font-bold italic leading-relaxed">
                                    {scene.visual} — {scene.action}
                                  </p>
                                </div>
+                               <div className="flex flex-col gap-2 opacity-60">
+                                  <span className="text-[10px] font-black text-gray-600 uppercase italic">Gesture/Expression:</span>
+                                  <p className="text-[12px] text-gray-400 italic">{scene.body_gesture} | {scene.facial_expression}</p>
+                               </div>
                             </div>
-                            <div className="space-y-5">
-                               <span className="text-[12px] text-gray-400 font-black uppercase tracking-[0.4em] flex items-center gap-4 italic">
-                                 <div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-[0_0_8px_blue]" /> Dialogue & Script (VN)
+                            <div className="space-y-6">
+                               <span className="text-[13px] text-gray-500 font-black uppercase tracking-[0.5em] flex items-center gap-5 italic">
+                                 <div className="w-3 h-3 bg-blue-600 rounded-full shadow-[0_0_10px_blue]" /> Audio & Dialogue
                                </span>
-                               <div className="space-y-5 bg-[#020617] p-8 rounded-[2rem] border border-white/5 min-h-[140px]">
-                                  <p className="text-base text-blue-400 font-black italic">"{scene.dialogue}"</p>
-                                  <div className="flex flex-wrap gap-6 pt-4 border-t border-white/5 opacity-50">
-                                    <div className="text-[11px] text-gray-400 italic flex items-center gap-2 font-bold"><Layers size={14}/> FX: {scene.sound_effects}</div>
-                                    <div className="text-[11px] text-gray-400 italic flex items-center gap-2 font-bold"><Wind size={14}/> AMB: {scene.ambient_audio}</div>
+                               <div className="space-y-6 bg-[#030712] p-10 rounded-[2.5rem] border border-white/5 min-h-[160px]">
+                                  <p className="text-lg text-blue-400 font-black italic">"{scene.dialogue_voice}"</p>
+                                  <div className="flex flex-wrap gap-8 pt-6 border-t border-white/5">
+                                    <div className="text-[12px] text-gray-500 italic flex items-center gap-3 font-black uppercase"><Layers size={16}/> FX: {scene.music_sound_effects}</div>
+                                    <div className="text-[12px] text-gray-500 italic flex items-center gap-3 font-black uppercase"><Wind size={16}/> AMB: {scene.ambient_audio}</div>
                                   </div>
                                 </div>
                             </div>
                          </div>
 
-                         {/* AI Prompts Section */}
-                         <div className="space-y-8">
-                            <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                              <h5 className="text-[14px] font-black uppercase tracking-[0.5em] text-blue-500 italic">Grok-3 / Sora AI Generation Suite (EN)</h5>
+                         {/* AI Prompts Generator Section */}
+                         <div className="space-y-10">
+                            <div className="flex justify-between items-center border-b border-white/5 pb-8">
+                              <h5 className="text-[16px] font-black uppercase tracking-[0.6em] text-blue-500 italic flex items-center gap-4">
+                                <Sparkles size={20}/> Grok-3 / Sora PROMPT SUITE (EN)
+                              </h5>
                               <button 
                                 onClick={() => setExpandedScene(expandedScene === scene.id ? null : scene.id)}
-                                className="px-6 py-2.5 rounded-full bg-blue-600/10 text-[11px] font-black uppercase text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 flex items-center gap-3 transition-all"
+                                className="px-8 py-3 rounded-full bg-blue-600/10 text-[12px] font-black uppercase text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 flex items-center gap-4 transition-all"
                               >
-                                {expandedScene === scene.id ? <><ChevronDown size={16} /> Less Detail</> : <><ChevronRight size={16} /> Show All Prompts</>}
+                                {expandedScene === scene.id ? <><ChevronDown size={18} /> Hide Prompts</> : <><ChevronRight size={18} /> Full Suite Details</>}
                               </button>
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-8">
                                <div className="group/prompt relative">
-                                 <div className="flex justify-between items-center mb-4 px-4">
-                                   <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest italic">Core Cinematic Video Prompt</span>
-                                   <button onClick={() => copyToClipboard(scene.grok_video_prompt, `vid-p-${scene.id}`)} className="text-[12px] font-black text-blue-500 hover:underline flex items-center gap-2">
-                                     <Copy size={14}/> Copy Prompt
+                                 <div className="flex justify-between items-center mb-5 px-6">
+                                   <span className="text-[12px] font-black text-gray-600 uppercase tracking-widest italic">Cinematic Video Prompt</span>
+                                   <button onClick={() => copyToClipboard(scene.cinematic_video_prompt, `vid-p-${scene.id}`)} className="text-[13px] font-black text-blue-500 hover:underline flex items-center gap-3">
+                                     <Copy size={16}/> Sao chép prompt
                                    </button>
                                  </div>
-                                 <div className="bg-black p-10 rounded-[2.5rem] border border-blue-500/10 text-[14px] font-mono text-blue-200/70 italic leading-[1.8] group-hover/prompt:border-blue-500/30 transition-all border-l-8 border-l-blue-600 shadow-3xl">
-                                   {scene.grok_video_prompt}
+                                 <div className="bg-black p-12 rounded-[3rem] border border-blue-500/10 text-[15px] font-mono text-blue-200/70 italic leading-[1.8] group-hover/prompt:border-blue-500/30 transition-all border-l-[12px] border-l-blue-600 shadow-3xl">
+                                   {scene.cinematic_video_prompt}
                                  </div>
                                </div>
 
                                {expandedScene === scene.id && (
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top duration-500">
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in slide-in-from-top duration-700">
                                     {[
-                                      { label: 'Character Profile', val: scene.character_description, icon: Cpu },
-                                      { label: 'Motion Dynamics', val: scene.motion_prompt, icon: RefreshCw },
-                                      { label: 'Advanced Camera', val: scene.camera_movement_prompt, icon: Camera },
-                                      { label: 'Env/Art Context', val: scene.environment_prompt, icon: Layers }
+                                      { label: 'Character Prompt', val: scene.character_description_prompt, icon: Cpu },
+                                      { label: 'Motion Control', val: scene.motion_prompt, icon: RefreshCw },
+                                      { label: 'Dynamic Camera', val: scene.camera_movement_prompt, icon: Camera },
+                                      { label: 'World/Art Style', val: scene.environment_prompt, icon: Layers },
+                                      { label: 'Image Prompt', val: scene.image_generation_prompt, icon: ImageIcon },
+                                      { label: 'Lighting Prompt', val: scene.lighting_prompt, icon: Sparkles }
                                     ].map((p, pi) => (
-                                      <div key={pi} className="p-8 rounded-[2rem] bg-white/5 border border-white/5 space-y-4 hover:border-blue-500/20 transition-all shadow-xl">
+                                      <div key={pi} className="p-10 rounded-[2.5rem] bg-white/5 border border-white/5 space-y-5 hover:border-blue-500/20 transition-all shadow-2xl">
                                         <div className="flex justify-between items-center">
-                                          <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-3 tracking-widest italic">
-                                            <p.icon size={16} className="text-blue-400"/> {p.label}
+                                          <span className="text-[11px] font-black text-gray-600 uppercase flex items-center gap-4 tracking-[0.2em] italic">
+                                            <p.icon size={18} className="text-blue-400"/> {p.label}
                                           </span>
-                                          <button onClick={() => copyToClipboard(p.val, `p-${pi}-${scene.id}`)} className="p-2 bg-white/5 rounded-lg hover:bg-white/10">
-                                            <Copy size={14} className="text-gray-500 hover:text-white" />
+                                          <button onClick={() => copyToClipboard(p.val, `p-${pi}-${scene.id}`)} className="p-3 bg-white/5 rounded-xl hover:bg-white/10">
+                                            <Copy size={16} className="text-gray-500 hover:text-white" />
                                           </button>
                                         </div>
-                                        <p className="text-[12px] text-gray-400 italic leading-relaxed font-mono opacity-80">{p.val}</p>
+                                        <p className="text-[13px] text-gray-400 italic leading-relaxed font-mono opacity-80">{p.val}</p>
                                       </div>
                                     ))}
                                  </div>
@@ -522,43 +542,43 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#020617] text-white font-['Inter'] selection:bg-blue-500/30">
-      <header className="px-12 py-8 flex justify-between items-center w-full border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-3xl z-40 shadow-2xl">
-        <div className="flex items-center gap-6 font-black tracking-tighter cursor-pointer group">
-          <div className="bg-blue-600 p-4 rounded-2xl shadow-2xl group-hover:rotate-[360deg] transition-transform duration-1000">
-            <Terminal size={24} className="text-white" />
+      <header className="px-12 py-10 flex justify-between items-center w-full border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-3xl z-40 shadow-2xl">
+        <div className="flex items-center gap-8 font-black tracking-tighter cursor-pointer group">
+          <div className="bg-blue-600 p-5 rounded-3xl shadow-3xl group-hover:rotate-[360deg] transition-transform duration-1000">
+            <Terminal size={32} className="text-white" />
           </div>
-          <span className="italic uppercase text-2xl hidden sm:inline tracking-tighter">
-            <span className="text-blue-500">PHV</span> AI PROMPT GENERATOR <span className="text-blue-600">PRO</span>
+          <span className="italic uppercase text-3xl hidden sm:inline tracking-tighter leading-none">
+            <span className="text-blue-500">PHV</span> AI GENERATOR <span className="text-blue-600">PRO</span>
           </span>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className={`flex items-center gap-5 text-[11px] font-black uppercase tracking-[0.2em] px-8 py-3.5 rounded-full border shadow-2xl transition-all ${isApiKeyDetected ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-            {isApiKeyDetected ? <><ShieldCheck size={18} className="text-green-500" /> ENGINE ACTIVE</> : <><ShieldAlert size={18} className="text-red-500" /> API KEY ERROR</>}
+        <div className="flex items-center gap-8">
+          <div className={`flex items-center gap-6 text-[12px] font-black uppercase tracking-[0.3em] px-10 py-4 rounded-full border shadow-3xl transition-all ${isApiKeyDetected ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+            {isApiKeyDetected ? <><ShieldCheck size={22} className="text-green-500" /> ENGINE ACTIVE</> : <><ShieldAlert size={22} className="text-red-500" /> AUTH ERROR</>}
           </div>
-          <div className="hidden xl:flex gap-8 text-[11px] font-black text-gray-500 italic opacity-50 uppercase tracking-widest">
-             <div className="flex items-center gap-3"><Mail size={16}/> tonyhoaivu@gmail.com</div>
-             <div className="flex items-center gap-3"><Phone size={16}/> 0927099940</div>
+          <div className="hidden 2xl:flex gap-12 text-[12px] font-black text-gray-600 italic opacity-60 uppercase tracking-[0.4em]">
+             <div className="flex items-center gap-4"><Mail size={20}/> tonyhoaivu@gmail.com</div>
+             <div className="flex items-center gap-4"><Phone size={20}/> 0927099940</div>
           </div>
         </div>
       </header>
 
       <main className="relative z-10 w-full mx-auto">{renderContent()}</main>
       
-      <footer className="w-full py-20 px-12 border-t border-white/5 text-center mt-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-blue-600/5 blur-[150px] -z-10" />
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div className="space-y-3">
-             <h4 className="text-2xl font-black italic uppercase tracking-tighter">Bản quyền © <span className="text-blue-500">TonyHoaivu.Com</span></h4>
-             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.8em] italic">AI Studio Professional Workflows</p>
+      <footer className="w-full py-24 px-12 border-t border-white/5 text-center mt-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-blue-600/5 blur-[200px] -z-10" />
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="space-y-4">
+             <h4 className="text-3xl font-black italic uppercase tracking-tighter">Bản quyền © <span className="text-blue-500">TonyHoaivu.Com</span></h4>
+             <p className="text-[12px] text-gray-600 font-black uppercase tracking-[1em] italic">AI Professional Storyboarding Tools</p>
           </div>
-          <div className="flex justify-center gap-12 opacity-40">
-            <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center gap-3 text-[12px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Mail size={18}/> tonyhoaivu@gmail.com</a>
-            <a href="tel:0927099940" className="flex items-center gap-3 text-[12px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Phone size={18}/> 0927099940</a>
+          <div className="flex flex-col sm:flex-row justify-center gap-10 opacity-50">
+            <a href="mailto:tonyhoaivu@gmail.com" className="flex items-center justify-center gap-4 text-[14px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Mail size={22}/> tonyhoaivu@gmail.com</a>
+            <a href="tel:0927099940" className="flex items-center justify-center gap-4 text-[14px] font-bold uppercase tracking-widest hover:text-blue-400 transition-colors"><Phone size={22}/> 0927099940</a>
           </div>
-          <p className="text-[10px] text-gray-700 max-w-2xl mx-auto leading-relaxed uppercase font-black tracking-[0.4em] italic pt-10 border-t border-white/5">
-            Optimized for Grok-3 Video, Sora, and Runway Gen-3. 
-            Automated Scene Recognition Engine powered by Gemini 3 Flash Multimodal AI.
+          <p className="text-[11px] text-gray-800 max-w-3xl mx-auto leading-relaxed uppercase font-black tracking-[0.6em] italic pt-12 border-t border-white/5">
+            Optimized for professional AI Video workflows: Grok-3, Sora, Runway Gen-3, Kling AI. 
+            Automated Scene Recognition powered by Gemini 3 Flash Brain.
           </p>
         </div>
       </footer>

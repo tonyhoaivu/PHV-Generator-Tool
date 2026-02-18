@@ -1,6 +1,6 @@
 {
-  "name": "PHV Generator Tool",
-  "description": "Công cụ phân tích kịch bản và chia cảnh 6 giây tự động để tạo video AI chuyên nghiệp.",
+  "name": "VIDEO & IMAGE ANALYSIS PROMPT GENERATOR PRO",
+  "description": "Hệ thống phân tích kịch bản và tạo prompt Grok-3 Video chuyên nghiệp từ link/ảnh thực tế. Bản quyền © TonyHoaivu.Com",
   "requestFramePermissions": [
     "camera",
     "microphone"

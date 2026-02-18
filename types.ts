@@ -4,21 +4,20 @@ export interface GrokScene {
   timestamp: string;
   visual: string;
   action: string;
-  gesture: string;
+  body_gesture: string;
   facial_expression: string;
-  camera: string;
-  environment: string;
+  camera_angle: string;
+  background_setting: string;
   objects: string;
-  lighting: string;
-  mood: string;
-  emotion: string;
-  dialogue: string;
-  sound_effects: string;
+  lighting_mood: string;
+  emotion_conveyed: string;
+  dialogue_voice: string;
+  music_sound_effects: string;
   ambient_audio: string;
-  // Prompts
-  grok_video_prompt: string;
-  image_prompt: string;
-  character_description: string;
+  // Prompts Suite
+  cinematic_video_prompt: string;
+  image_generation_prompt: string;
+  character_description_prompt: string;
   motion_prompt: string;
   camera_movement_prompt: string;
   lighting_prompt: string;
@@ -35,7 +34,7 @@ export interface HookData {
   image_prompt: string;
   thumbnail_text: string;
   emotional_highlight: string;
-  dramatic_lighting: string;
+  dramatic_lighting_description: string;
 }
 
 export interface ScriptAnalysisResult {
