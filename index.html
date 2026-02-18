@@ -4,10 +4,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PHV Generator Tool - Trợ Lý Sáng Tạo Video AI</title>
+    <title>VIDEO & IMAGE → PROMPT GENERATOR PRO - TonyHoaivu.Com</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
       
       :root {
         font-size: 14px;
@@ -18,16 +18,25 @@
         background-color: #020617;
         color: #e5e7eb;
         line-height: 1.6;
+        overflow-x: hidden;
       }
 
       .glass {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(12px);
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
 
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 8s linear infinite;
+      }
+
       ::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
       }
       ::-webkit-scrollbar-track {
         background: #020617;
@@ -35,9 +44,14 @@
       ::-webkit-scrollbar-thumb {
         background: #1e293b;
         border-radius: 10px;
+        border: 2px solid #020617;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #334155;
+      }
+
+      .shadow-3xl {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       }
     </style>
   <script type="importmap">

@@ -3,8 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScriptAnalysisResult, AnalysisOptions } from "../types";
 
 export const analyzeVideoContent = async (input: string | { data: string, mimeType: string } | { data: string, mimeType: string }[], options: AnalysisOptions): Promise<ScriptAnalysisResult> => {
-  // Always obtain the API key exclusively from process.env.API_KEY as per guidelines.
-  // We initialize the instance inside the function to ensure it uses the most current API key environment state.
+  // Always obtain the API key exclusively from process.env.API_KEY
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let parts: any[] = [];
@@ -18,28 +17,29 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
   } else if (!isString) {
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
-    parts.push({ text: `Source content to analyze: ${input}` });
+    parts.push({ text: `Analyze the REAL content from this source: ${input}` });
   }
 
   const systemInstruction = `
 # SYSTEM ROLE:
-You are a "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" AI agent.
-Your mission is to analyze REAL content and generate ultra-detailed scene breakdowns and AI generation prompts.
+You are an advanced "VIDEO & IMAGE → SCENE ANALYSIS → PROMPT GENERATOR PRO" powered by Gemini.
+Your specialty is extracting REAL data from visual/audio media for professional AI video storyboarding.
 
-# STRICT RULES:
-1. Analyze REAL visual/audio content. DO NOT invent scenes or characters not present in the source.
-2. For VIDEO (links or files): Split into 6-second blocks.
-3. For IMAGES: Analyze character appearance, poses, and environment. If multiple images, treat them as sequential storyboard scenes.
-4. If content cannot be accessed or is invalid, return "Unable to analyze source content."
+# STRICT SYSTEM RULES:
+1. ANALYSIS MUST BE REAL: You must describe only what is actually present in the provided links or images. 
+2. NO INVENTIONS: Do not invent storylines, characters, or scenes if they are not in the source.
+3. SCENE SPLIT: For videos, strictly split scenes into 6-second blocks (e.g., 00:00-00:06, 00:06-00:12).
+4. MULTIPLE IMAGES: If multiple images are provided, treat them as a sequential storyboard.
+5. PROMPT QUALITY: Every generated prompt (Grok, Camera, Motion, etc.) must be in English, ultra-detailed, cinematic, and ready for high-end AI video generators.
 
-# OUTPUT REQUIREMENTS:
-- Analysis Language: Vietnamese
-- Generation Prompts: English
-- Titles: Vietnamese + English (10 suggestions)
-- Style: Ultra-detailed, Cinematic, optimized for Grok/Sora/Runway.
+# OUTPUT STRUCTURE (Vietnamese for analysis, English for prompts):
+- Summary/Analysis: Vietnamese
+- Dialogue/Action/Visuals: Vietnamese
+- Titles: Vietnamese + English Prompts
+- All Generation Prompts: English
 
-# RESPONSE SCHEMA (JSON):
-Use the provided responseSchema.
+# ERROR HANDLING:
+If you cannot access the link or understand the content, return a JSON with a single property: {"error": "Unable to analyze source content."}
 `;
 
   try {
@@ -113,17 +113,16 @@ Use the provided responseSchema.
     }
 
     const response = await ai.models.generateContent({
-      // Complex reasoning tasks (like detailed video/scene analysis and prompt generation) 
-      // are better handled by gemini-3-pro-preview.
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-pro-preview', // Pro model for complex scene breakdown
       contents: { parts: [...parts, { text: systemInstruction }] },
       config
     });
 
-    // Directly access the .text property from the response as per guidelines.
-    return JSON.parse(response.text || "{}");
+    const result = JSON.parse(response.text || "{}");
+    if (result.error) throw new Error(result.error);
+    return result;
   } catch (error: any) {
     console.error("Gemini Error:", error);
-    throw new Error(error.message || "Lỗi hệ thống khi phân tích content.");
+    throw new Error(error.message || "Lỗi hệ thống khi truy xuất dữ liệu.");
   }
 };
