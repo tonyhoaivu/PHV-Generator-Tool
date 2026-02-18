@@ -11,25 +11,17 @@ export interface GrokScene {
   timestamp: string;
   visual: string;
   action: string;
-  body_gesture: string;
-  facial_expression: string;
   camera_angle: string;
-  background_setting: string;
-  objects: string;
   lighting_mood: string;
-  mood: string;
-  emotion_conveyed: string;
-  dialogue_voice: string;
   vietnamese_vocal: string;
   music_sound_effects: string;
-  ambient_audio: string;
   cinematic_video_prompt: string;
   image_generation_prompt: string;
-  character_description_prompt: string;
-  motion_prompt: string;
-  camera_movement_prompt: string;
-  lighting_prompt: string;
-  environment_prompt: string;
+  // Các trường Micro-Analysis mới
+  pacing_analysis: string; // Phân tích nhịp độ/pacing
+  visual_layer_analysis: string; // Phân tích thị giác/lớp hình ảnh
+  vocal_prosody_analysis: string; // Phân tích ngữ điệu/prosody
+  subtext_analysis: string; // Phân tích cảm xúc ẩn/subtext
 }
 
 export interface ViralTitle {
@@ -47,6 +39,7 @@ export interface HookData {
 
 export interface ScriptAnalysisResult {
   summary: string;
+  technical_assessment: string; // Thay thế summary truyền thống bằng đánh giá kỹ thuật
   language: string;
   detected_characters: string[];
   detected_locations: string[];

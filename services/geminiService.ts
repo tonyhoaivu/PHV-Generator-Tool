@@ -17,30 +17,34 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
     const promptPrefix = isUrl 
-      ? `PHÂN TÍCH NỘI DUNG VIDEO TỪ LINK NÀY: ${input}. Hãy bóc tách kỹ thuật và biến nó thành series "Chiến binh Rau Củ".`
-      : `Sáng tạo series "Chiến binh Rau Củ" dựa trên ý tưởng: ${input}`;
+      ? `NHIỆM VỤ: Hãy thực hiện "Micro-Analysis" video này: ${input}. Đừng tóm tắt, hãy giải mã kỹ thuật.`
+      : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" với độ sâu của một đạo diễn điện ảnh.`;
     parts.push({ text: promptPrefix });
   }
 
   const systemInstruction = `
-# SYSTEM ROLE:
-Bạn là một đạo diễn kỹ thuật và chuyên gia kịch bản AI xuất sắc, chuyên bóc tách video thành các phân cảnh 6 giây cực kỳ chi tiết cho series "Chiến binh Rau Củ" (phong cách 3D Pixar Tactical).
+# NHIỆM VỤ CỐT LÕI:
+Bạn là một Chuyên gia phê bình điện ảnh và Kỹ sư âm thanh cấp cao. Nhiệm vụ của bạn là phân tích video/ý tưởng theo phương pháp "Micro-Analysis", tập trung vào giải mã "Tại sao phân cảnh/vocal này lại hiệu quả" về mặt kỹ thuật và cảm giác điện ảnh.
 
-# QUY TẮC PHÂN TÍCH 6 GIÂY (CỰC KỲ CHI TIẾT):
-Mọi phân cảnh phải được mô tả tỉ mỉ bao gồm:
-1. **Chuyển động (Movement)**: Mô tả chính xác nhân vật di chuyển thế nào trong 6 giây (ví dụ: "Lăn nhanh về phía trước, xoay người 360 độ và rút kiếm").
-2. **Góc máy (Camera)**: Sử dụng thuật ngữ điện ảnh (Close-up, Tracking shot, Dutch angle, Drone view).
-3. **Âm thanh (Audio/SFX)**: Mô tả âm thanh môi trường và hiệu ứng (tiếng kim loại va chạm, tiếng xì xào của lá, nhạc kịch tính).
-4. **Vocal Tiếng Việt (BẮT BUỘC)**: Câu nói tiếng Việt cực "gắt", mang tính cách nhân vật (ví dụ: "Bạn sợ tôi hằng? Cái hằng này là vũ khí diệt khuẩn và quét sạch mỡ máu cho bạn đấy!"). Lời thoại phải hài hước, truyền cảm hứng hoặc đe dọa kẻ thù một cách sáng tạo.
+# NGUYÊN TẮC PHÂN TÍCH VI MÔ (MICRO-ANALYSIS):
 
-# NHIỆM VỤ:
-1. Phân tích nội dung gốc từ input (link hoặc ảnh).
-2. Chuyển đổi thành storyboard "Chiến binh Rau Củ". Nhân vật: Carrot Commander, Onion Ninja, Broccoli Tank, Mướp Warrior... trang bị Tactical Gear, Lightsaber, Súng nước áp lực cao.
-3. Mỗi cảnh phải đảm bảo tính khả thi để tạo video AI (Sora/Runway/Luma) với độ dài 6s.
+1. PHÂN TÍCH PHÂN CẢNH (VISUAL & SCENE ANALYSIS):
+- Nhịp độ (Pacing): Tốc độ cắt cảnh, sự thay đổi khung hình (Close-up, Wide-shot) ảnh hưởng thế nào đến tâm lý.
+- Thị giác (Visual Layer): Bóc tách màu sắc, ánh sáng, bố cục. Giải mã sự tương phản và thông điệp thị giác.
+- Chuyển động (Motion): Động lực học của nhân vật (mượt mà hay mạnh bạo).
 
-# CẤU TRÚC PHẢN HỒI:
-- summary: Tóm tắt ý tưởng tổng thể.
-- scenes: Danh sách các cảnh, mỗi cảnh mô tả sâu về hình ảnh, video prompt, chuyển động, âm thanh và lời thoại tiếng Việt.
+2. PHÂN TÍCH VOCAL & ÂM THANH (VOCAL & AUDIO DEEP-DIVE):
+- Ngữ điệu (Prosody): Độ cao, trầm, biến thiên tông giọng và điểm nhấn (Emphasis).
+- Nhịp thở & Ngắt nghỉ: Các khoảng lặng (silence) tạo tò mò hay uy lực.
+- Cảm xúc ẩn (Subtext): Phân tích cách rung thanh quản mang lại sắc thái giễu nhại, hào hùng hay ân cần.
+
+# QUY TẮC ĐẶC BIỆT:
+- KHÔNG TÓM TẮT NỘI DUNG hời hợt. Tập trung vào GIẢI MÃ KỸ THUẬT.
+- Sử dụng thuật ngữ chuyên môn: Cinematography, Sound Design, Dutch angle, Dynamic range, Prosody...
+- Luôn bao gồm Vocal Tiếng Việt gắt trong ngoặc vuông ở cuối Video Prompt.
+
+# ĐỊNH DẠNG ĐẦU RA:
+- Trình bày kịch bản "Chiến binh Rau Củ" phong cách 3D Pixar Tactical cực kỳ chi tiết.
 `;
 
   try {
@@ -51,7 +55,8 @@ Mọi phân cảnh phải được mô tả tỉ mỉ bao gồm:
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          summary: { type: Type.STRING },
+          technical_assessment: { type: Type.STRING, description: "Giải mã kỹ thuật tổng quan của video" },
+          summary: { type: Type.STRING, description: "Tóm tắt ngắn gọn ý tưởng (giữ để tương thích UI)" },
           language: { type: Type.STRING },
           detected_characters: { type: Type.ARRAY, items: { type: Type.STRING } },
           detected_locations: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -88,18 +93,18 @@ Mọi phân cảnh phải được mô tả tỉ mỉ bao gồm:
                 image_generation_prompt: { type: Type.STRING },
                 cinematic_video_prompt: { type: Type.STRING },
                 vietnamese_vocal: { type: Type.STRING },
-                mood: { type: Type.STRING },
-                camera_angle: { type: Type.STRING },
-                lighting_mood: { type: Type.STRING },
-                background_setting: { type: Type.STRING },
-                action: { type: Type.STRING, description: "Chi tiết chuyển động trong 6s" },
-                music_sound_effects: { type: Type.STRING, description: "Mô tả âm thanh SFX và nhạc nền" }
+                action: { type: Type.STRING },
+                music_sound_effects: { type: Type.STRING },
+                pacing_analysis: { type: Type.STRING },
+                visual_layer_analysis: { type: Type.STRING },
+                vocal_prosody_analysis: { type: Type.STRING },
+                subtext_analysis: { type: Type.STRING }
               },
-              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal", "action", "music_sound_effects"]
+              required: ["id", "timestamp", "visual", "image_generation_prompt", "cinematic_video_prompt", "vietnamese_vocal", "pacing_analysis", "visual_layer_analysis", "vocal_prosody_analysis"]
             }
           }
         },
-        required: ["summary", "language", "detected_characters", "detected_locations", "hook_data", "titles", "scenes"]
+        required: ["technical_assessment", "summary", "language", "detected_characters", "detected_locations", "hook_data", "titles", "scenes"]
       }
     };
 

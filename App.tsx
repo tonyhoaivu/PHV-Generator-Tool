@@ -27,7 +27,11 @@ import {
   Camera,
   CheckCircle2,
   Music,
-  Move
+  Move,
+  Activity,
+  Waves,
+  Mic2,
+  Brain
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, Ad } from './types';
@@ -368,32 +372,32 @@ const App: React.FC = () => {
               <h1 className="text-6xl md:text-8xl font-serif font-black text-emerald-950 mb-6 tracking-tighter leading-none">
                 PHV <span className="text-emerald-600 italic">Generator</span>
               </h1>
-              <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[1em] uppercase">6s Pixar Logic • Multimodal AI</p>
+              <p className="text-gray-400 text-xs font-black italic mb-16 tracking-[1em] uppercase">Micro-Analysis • Senior AI Engineering</p>
               <div className="bg-white luxury-border luxury-shadow p-12 md:p-20 rounded-[4rem] relative overflow-hidden text-left">
                 <div className="absolute top-0 right-0 p-10 opacity-5"><Sparkles size={160} className="text-emerald-600" /></div>
                 <div className="space-y-16">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between ml-4">
-                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Phân tích Video Link</label>
+                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Bóc tách Video Link (Micro-Analysis)</label>
                       <div className="flex gap-4 opacity-40"><Youtube size={18} /><LinkIcon size={18} /></div>
                     </div>
                     <textarea 
                       className="w-full bg-gray-50/50 border border-gray-100 rounded-[3rem] p-10 text-emerald-950 text-xl focus:ring-8 focus:ring-emerald-500/5 transition-all min-h-[180px] placeholder:italic placeholder:text-gray-300 resize-none font-medium leading-relaxed"
-                      placeholder="Dán link YouTube, TikTok hoặc FB để AI phân tích..."
+                      placeholder="Dán link để chuyên gia phân tích vi mô kỹ thuật..."
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                     />
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between ml-4">
-                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Hoặc Tải File Ảnh/Video</label>
+                      <label className="text-[11px] font-black uppercase text-emerald-800/40 tracking-[0.4em]">Phân tích đa phương thức (Multimodal)</label>
                       <Upload size={18} className="opacity-40" />
                     </div>
                     <div onClick={() => fileInputRef.current?.click()} className="group cursor-pointer border-4 border-dashed border-emerald-50 bg-emerald-50/10 rounded-[3rem] p-16 text-center hover:bg-emerald-50/30 hover:border-emerald-200 transition-all duration-500">
                       <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple hidden accept="image/*,video/*" />
                       <div className="flex flex-col items-center gap-6">
                         <div className="p-6 bg-white rounded-3xl shadow-xl group-hover:scale-110 transition-transform"><Upload size={40} className="text-emerald-600" /></div>
-                        <p className="text-emerald-950 font-black italic text-xl uppercase tracking-tight">Kéo thả hoặc Click để tải lên</p>
+                        <p className="text-emerald-950 font-black italic text-xl uppercase tracking-tight">Kéo thả để bóc tách kỹ thuật</p>
                       </div>
                     </div>
                     {files.length > 0 && (
@@ -413,7 +417,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-8">
                     <button onClick={handleProcess} disabled={(!inputText && files.length === 0) || !isApiKeyDetected} className="btn-luxury flex-[4] text-white font-black px-12 py-8 rounded-[2.5rem] text-[15px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 disabled:opacity-50 shadow-2xl">
-                      <Sparkles size={28} className="animate-pulse" /> Tạo kịch bản 6s Pixar
+                      <Brain size={28} className="animate-pulse" /> Chạy Micro-Analysis Pixar
                     </button>
                   </div>
                 </div>
@@ -422,28 +426,31 @@ const App: React.FC = () => {
           ) : step !== 'completed' && step !== 'error' ? (
             <div className="max-w-xl mx-auto mt-32 text-center animate-fade">
               <RefreshCw size={100} className="text-emerald-600 animate-spin-slow mx-auto mb-16 opacity-30" />
-              <h3 className="text-4xl font-serif font-black text-emerald-900 mb-6 italic">Sáng tạo kịch bản chuyên sâu...</h3>
+              <h3 className="text-4xl font-serif font-black text-emerald-900 mb-6 italic">Đang giải mã kỹ thuật vi mô...</h3>
               <div className="mt-16 bg-white luxury-border luxury-shadow p-10 rounded-[4rem]"><StepIndicator currentStep={step} /></div>
             </div>
           ) : result ? (
             <div className="flex flex-col lg:flex-row gap-16 mt-12 max-w-[1700px] mx-auto px-10 animate-fade">
               <div className="flex-1 space-y-20 pb-60">
-                <div className="bg-emerald-50/40 p-14 rounded-[4rem] luxury-border luxury-shadow relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-10 opacity-5"><Globe size={180} className="text-emerald-900" /></div>
-                   <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest mb-8 flex items-center gap-4"><FileText size={24}/> Tóm tắt phân tích video</h3>
-                   <p className="text-emerald-950 font-medium leading-relaxed text-2xl italic mb-10">{result.summary}</p>
+                {/* TECHNICAL ASSESSMENT (MICRO-ANALYSIS EXPERT) */}
+                <div className="bg-emerald-900 text-emerald-50 p-14 rounded-[4rem] luxury-shadow relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-10 opacity-10"><Brain size={180} /></div>
+                   <h3 className="text-xl font-black uppercase tracking-[0.5em] mb-8 flex items-center gap-4 text-emerald-400"><Shield size={24}/> Chuyên gia đánh giá tổng quan (Expert Assessment)</h3>
+                   <p className="text-2xl font-serif italic leading-relaxed mb-10 border-l-4 border-emerald-500 pl-8">{result.technical_assessment || result.summary}</p>
                    <div className="flex flex-wrap gap-6">
-                      <div className="bg-white px-8 py-5 rounded-[2rem] border border-emerald-100 flex items-center gap-4 luxury-shadow">
-                         <Clock size={20} className="text-emerald-600" />
-                         <span className="text-[13px] font-black uppercase text-emerald-950 tracking-[0.2em]">Cấu trúc: 6s / Scene</span>
+                      <div className="bg-emerald-800/50 px-8 py-5 rounded-[2rem] border border-emerald-700 flex items-center gap-4">
+                         <Activity size={20} className="text-emerald-400" />
+                         <span className="text-[13px] font-black uppercase tracking-[0.2em]">Cinematography: Level A+</span>
                       </div>
                    </div>
                 </div>
+
                 <div className="space-y-20">
                   <div className="flex items-center justify-between border-b border-gray-100 pb-10">
-                    <h2 className="text-5xl font-serif font-black text-emerald-950 italic">Storyboard Pixar (6s)</h2>
+                    <h2 className="text-5xl font-serif font-black text-emerald-950 italic">Giải mã phân cảnh (6s Micro-Analysis)</h2>
                     <button onClick={() => setStep('idle')} className="bg-white border luxury-border px-10 py-4 rounded-2xl text-emerald-800 font-black uppercase text-[11px] tracking-widest hover:bg-emerald-50 transition-all flex items-center gap-3"><RefreshCw size={18} /> Phân tích video khác</button>
                   </div>
+
                   {result.scenes.map((scene) => (
                     <div key={scene.id} className="bg-white luxury-border luxury-shadow rounded-[4rem] overflow-hidden group hover:-translate-y-2 transition-all duration-700">
                       <div className="p-12 md:p-20 space-y-12">
@@ -452,37 +459,40 @@ const App: React.FC = () => {
                             <div className="w-20 h-20 rounded-3xl bg-emerald-800 text-white flex items-center justify-center font-serif text-4xl font-black italic shadow-2xl group-hover:rotate-12 transition-transform">{scene.id}</div>
                             <h4 className="text-3xl font-serif font-black text-emerald-950 italic tracking-tight">{scene.visual}</h4>
                           </div>
-                          <div className="bg-amber-50 text-amber-800 px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-amber-100 flex items-center gap-3"><Clock size={16} /> 6 Seconds</div>
+                          <div className="bg-emerald-50 text-emerald-800 px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-[0.3em] border border-emerald-100 flex items-center gap-3"><Clock size={16} /> 6 Seconds</div>
                         </div>
 
-                        {/* CHI TIẾT KỸ THUẬT PHÂN CẢNH */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
-                           <div className="flex gap-4 items-start">
-                              <div className="p-3 bg-white rounded-xl shadow-sm"><Move size={20} className="text-emerald-600" /></div>
-                              <div>
-                                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Chuyển động & Góc máy</p>
-                                 <p className="text-sm text-emerald-950 font-bold">{scene.action || "Đang bóc tách kỹ thuật..."}</p>
+                        {/* MICRO-ANALYSIS DETAILS */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                              <div className="flex items-center gap-3 mb-2">
+                                 <Activity size={18} className="text-emerald-600" />
+                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Pacing (Nhịp độ)</span>
                               </div>
+                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.pacing_analysis}</p>
                            </div>
-                           <div className="flex gap-4 items-start">
-                              <div className="p-3 bg-white rounded-xl shadow-sm"><Music size={20} className="text-amber-600" /></div>
-                              <div>
-                                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Âm thanh & SFX</p>
-                                 <p className="text-sm text-emerald-950 font-bold">{scene.music_sound_effects || "Đang phân tích audio..."}</p>
+                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                              <div className="flex items-center gap-3 mb-2">
+                                 <Waves size={18} className="text-blue-600" />
+                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Visual Layer (Thị giác)</span>
                               </div>
+                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.visual_layer_analysis}</p>
+                           </div>
+                           <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                              <div className="flex items-center gap-3 mb-2">
+                                 <Mic2 size={18} className="text-amber-600" />
+                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Prosody (Ngữ điệu)</span>
+                              </div>
+                              <p className="text-sm text-emerald-950 font-bold leading-relaxed">{scene.vocal_prosody_analysis}</p>
                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-14">
+                        {/* TECHNICAL PROMPTS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-14 mt-12">
                           <div className="space-y-8">
                             <div className="flex justify-between items-center">
                                <span className="text-[14px] font-black uppercase tracking-[0.3em] text-emerald-800 flex items-center gap-4"><ImageIcon size={22} /> Prompt Hình Ảnh</span>
-                               <button 
-                                  onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} 
-                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `ip-${scene.id}` ? 'bg-green-100 text-green-600' : 'bg-white text-emerald-600 hover:bg-emerald-50 border'}`}
-                               >
-                                  <Copy size={14} /> {copiedId === `ip-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}
-                               </button>
+                               <button onClick={() => copyToClipboard(scene.image_generation_prompt, `ip-${scene.id}`)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `ip-${scene.id}` ? 'bg-green-100 text-green-600' : 'bg-white text-emerald-600 hover:bg-emerald-50 border'}`}><Copy size={14} /> {copiedId === `ip-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}</button>
                             </div>
                             <div className="bg-gray-50/50 p-10 rounded-[2.5rem] border border-gray-100 relative group/p min-h-[160px] luxury-shadow">
                               <p className="text-[15px] text-emerald-950 font-mono italic leading-relaxed">{scene.image_generation_prompt}</p>
@@ -491,12 +501,7 @@ const App: React.FC = () => {
                           <div className="space-y-8">
                             <div className="flex justify-between items-center">
                                <span className="text-[14px] font-black uppercase tracking-[0.3em] text-amber-700 flex items-center gap-4"><MonitorPlay size={22} /> Video Motion (6s)</span>
-                               <button 
-                                  onClick={() => copyToClipboard(`${scene.cinematic_video_prompt} ["${scene.vietnamese_vocal}"]`, `v-${scene.id}`)} 
-                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `v-${scene.id}` ? 'bg-amber-100 text-amber-800' : 'bg-white text-amber-600 hover:bg-amber-50 border'}`}
-                               >
-                                  <Copy size={14} /> {copiedId === `v-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}
-                               </button>
+                               <button onClick={() => copyToClipboard(`${scene.cinematic_video_prompt} ["${scene.vietnamese_vocal}"]`, `v-${scene.id}`)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedId === `v-${scene.id}` ? 'bg-amber-100 text-amber-800' : 'bg-white text-amber-600 hover:bg-amber-50 border'}`}><Copy size={14} /> {copiedId === `v-${scene.id}` ? 'Đã copy!' : 'Copy Prompt'}</button>
                             </div>
                             <div className="bg-amber-50/20 p-10 rounded-[2.5rem] border border-amber-100 relative group/v min-h-[160px] luxury-shadow">
                               <p className="text-[15px] text-emerald-950 font-black italic leading-relaxed">
