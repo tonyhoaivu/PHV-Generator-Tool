@@ -23,7 +23,8 @@ import {
   Layout,
   Activity,
   Cpu,
-  ExternalLink
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import { analyzeVideoContent } from './services/geminiService';
 import { ScriptAnalysisResult, ProcessingStep, AnalysisOptions, GrokScene } from './types';
@@ -57,9 +58,9 @@ const App: React.FC = () => {
     setResult(null);
     try {
       setStep('fetching');
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 100));
       setStep('transcribing');
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 100));
       setStep('analyzing');
       const analysis = await analyzeVideoContent(file || inputText, { doAnalysis: true } as any);
       setResult(analysis);
@@ -96,39 +97,39 @@ const App: React.FC = () => {
             <span className="bg-blue-600 text-[10px] px-2 py-0.5 rounded italic non-italic font-bold tracking-normal align-middle shadow-lg shadow-blue-500/50">TURBO 3.0</span>
           </h1>
           <p className="text-gray-400 text-sm font-medium italic opacity-70 mb-12 tracking-wide">
-            Hệ thống phân tích siêu tốc — Hỗ trợ xem Link video YouTube/TikTok/FB
+            Phân tích Video Link & Kịch bản — Phân cảnh 6s chuyên nghiệp
           </p>
           
           <div className="max-w-3xl mx-auto glass p-8 rounded-[2rem] border border-white/10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4">
               <div className="flex items-center gap-2 text-[8px] font-bold text-blue-500 uppercase tracking-widest">
-                <Cpu size={12} /> Flash Engine Active
+                <Cpu size={12} /> Optimized Flash Engine
               </div>
             </div>
             <div className="space-y-6">
               <div className="relative">
                 <textarea 
                   className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-white text-sm focus:ring-2 focus:ring-blue-500 transition-all min-h-[250px] placeholder:italic placeholder:text-gray-600 shadow-inner"
-                  placeholder="Dán link video YouTube/TikTok hoặc dán kịch bản tại đây..."
+                  placeholder="Dán link (YT/TikTok) hoặc kịch bản chữ..."
                   value={inputText}
                   onChange={(e) => { setInputText(e.target.value); setFile(null); }}
                 />
                 <div className="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase italic">
-                  <ExternalLink size={12} /> Google Search Grounding
+                  <ExternalLink size={12} /> Auto-detect Link
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.docx,video/*" onChange={handleFileUpload} />
                 <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-white/5 hover:bg-white/10 text-white px-6 py-4 rounded-xl border border-white/10 font-black uppercase text-[11px] transition-all flex items-center justify-center gap-3">
-                  <Upload size={16} /> Tải Kịch Bản
+                  <Upload size={16} /> File Kịch Bản
                 </button>
                 <button 
                   onClick={handleProcess} 
                   disabled={!inputText && !file} 
                   className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white font-black px-8 py-4 rounded-xl text-[11px] uppercase transition-all shadow-[0_10px_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 active:scale-95"
                 >
-                  <Sparkles size={16} className="animate-pulse" /> Bắt Đầu Phân Tích
+                  <Sparkles size={16} /> Bắt Đầu Phân Tích
                 </button>
               </div>
             </div>
@@ -145,7 +146,7 @@ const App: React.FC = () => {
               <RefreshCw size={48} className="text-blue-500 animate-spin mx-auto mb-6" />
               <Zap size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
             </div>
-            <h3 className="text-lg font-black text-white uppercase tracking-widest italic animate-pulse">Đang quét dữ liệu video...</h3>
+            <h3 className="text-lg font-black text-white uppercase tracking-widest italic animate-pulse">Đang xử lý kịch bản...</h3>
           </div>
           <StepIndicator currentStep={step} />
         </div>
@@ -153,17 +154,36 @@ const App: React.FC = () => {
     }
 
     if (step === 'error') {
+      const isConfigError = error?.includes("LỖI CẤU HÌNH");
+
       return (
-        <div className="max-w-md mx-auto mt-24 text-center px-8 py-12 glass rounded-[2rem] border border-red-500/20 shadow-2xl animate-in zoom-in">
-          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h2 className="text-white font-black uppercase text-sm mb-2 tracking-widest">PHÁT HIỆN LỖI</h2>
-          <p className="text-red-400 mb-8 text-sm italic font-medium">"{error}"</p>
-          <div className="space-y-4">
-             <button onClick={() => setStep('idle')} className="w-full bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-xl font-black text-[11px] uppercase shadow-lg transition-all">Thử Lại</button>
-             <p className="text-[9px] text-gray-500 uppercase font-bold italic tracking-tighter leading-tight">
-               * Nếu lỗi liên quan đến API Key, hãy kiểm tra lại cài đặt môi trường trên Vercel Dashboard.
-             </p>
+        <div className="max-w-xl mx-auto mt-24 text-center px-10 py-12 glass rounded-[2.5rem] border border-red-500/20 shadow-2xl animate-in zoom-in">
+          <AlertCircle size={56} className="text-red-500 mx-auto mb-6 shadow-red-500/20 shadow-2xl" />
+          <h2 className="text-white font-black uppercase text-base mb-4 tracking-widest italic">THÔNG BÁO HỆ THỐNG</h2>
+          <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10 mb-8 text-left">
+            <p className="text-red-400 text-sm italic font-bold leading-relaxed whitespace-pre-line">{error}</p>
           </div>
+          
+          <div className="text-left space-y-4 mb-10">
+            {isConfigError && (
+              <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 flex gap-4">
+                <Settings size={20} className="text-blue-400 shrink-0" />
+                <div className="text-[10px] text-gray-400 font-medium leading-relaxed">
+                  <p className="text-blue-400 font-black mb-1 uppercase underline">Cách Redeploy trên Vercel:</p>
+                  <ol className="list-decimal ml-4 space-y-1">
+                    <li>Vào trang Dashboard dự án trên <b>Vercel</b>.</li>
+                    <li>Vào tab <b>Deployments</b>.</li>
+                    <li>Nhấn vào nút <b className="text-white">...</b> (ba chấm) ở bản build gần nhất.</li>
+                    <li>Chọn <b className="text-white">Redeploy</b>.</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button onClick={() => setStep('idle')} className="w-full bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-[12px] uppercase shadow-lg transition-all active:scale-95 shadow-red-600/20">
+            Quay Lại Trang Chủ
+          </button>
         </div>
       );
     }
@@ -176,19 +196,18 @@ const App: React.FC = () => {
             <div className="space-y-1">
                <h2 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
                 Kết Quả <span className="text-blue-500">Phân Tích</span>
-                <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30 font-bold">HOÀN TẤT</span>
                </h2>
                <div className="flex gap-2 items-center">
                  <span className="bg-blue-600/10 text-blue-400 text-[9px] font-black px-3 py-1 rounded-full border border-blue-500/20 uppercase italic">
                     {result.language}
                  </span>
-                 <span className="bg-green-600/10 text-green-400 text-[9px] font-black px-3 py-1 rounded-full border border-blue-500/20 uppercase italic">
-                    {result.scenes.length} Phân Cảnh
+                 <span className="bg-green-600/10 text-green-400 text-[9px] font-black px-3 py-1 rounded-full border border-green-500/20 uppercase italic">
+                    {result.scenes.length} Cảnh 6s
                  </span>
                </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => downloadFile(JSON.stringify(result, null, 2), "phv-turbo-export.json", "application/json")} className="glass px-4 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 hover:bg-white/5 transition-all">
+              <button onClick={() => downloadFile(JSON.stringify(result, null, 2), "phv-export.json", "application/json")} className="glass px-4 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 hover:bg-white/5 transition-all">
                 <FileJson size={14} /> Xuất JSON
               </button>
               <button onClick={() => setStep('idle')} className="bg-blue-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 hover:bg-blue-500 transition-all">
@@ -203,7 +222,7 @@ const App: React.FC = () => {
                   <h4 className="text-blue-500 font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-3">
                     <FileText size={16}/> Kịch Bản Tối Ưu
                   </h4>
-                  <div className="p-6 bg-black/40 rounded-2xl border border-white/5">
+                  <div className="p-6 bg-black/40 rounded-2xl border border-white/5 shadow-inner">
                     <p className="text-sm text-gray-300 leading-relaxed italic whitespace-pre-wrap">"{result.rewritten_script}"</p>
                   </div>
                 </div>
@@ -212,7 +231,7 @@ const App: React.FC = () => {
              <div className="space-y-6">
                <div className="glass p-8 rounded-3xl h-full space-y-6">
                   <h4 className="text-green-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-3">
-                    <Sparkles size={16}/> Tiêu Đề Gợi Ý
+                    <Sparkles size={16}/> Tiêu Đề Viral
                   </h4>
                   <div className="space-y-4">
                     {result.viral_titles.map((title: string, i: number) => (
@@ -234,7 +253,7 @@ const App: React.FC = () => {
                 <MonitorPlay className="text-blue-500" size={24}/> Danh Sách Cảnh 6 Giây
              </h3>
 
-             <div className="space-y-12">
+             <div className="grid grid-cols-1 gap-10">
                 {result.scenes.map((scene: GrokScene) => (
                   <div key={scene.id} className="bg-[#0f172a] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl hover:border-blue-500/30 transition-all group/scene relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.8)]"></div>
@@ -246,7 +265,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <span className="text-xl font-black text-blue-400 uppercase tracking-widest">{scene.timestamp}</span>
-                          <span className="block text-[10px] text-gray-500 font-bold uppercase italic tracking-widest">Chu kỳ 6s</span>
+                          <span className="block text-[10px] text-gray-500 font-bold uppercase italic tracking-widest italic">Standard 6s Block</span>
                         </div>
                       </div>
                       
@@ -268,15 +287,15 @@ const App: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                        <div className="space-y-6">
                           <div className="space-y-2">
-                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest italic">** Hình Ảnh & Hành Động **</span>
-                            <div className="bg-black/30 p-6 rounded-2xl border border-white/5 min-h-[100px]">
+                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest italic opacity-50">** Hình Ảnh & Hành Động **</span>
+                            <div className="bg-black/30 p-6 rounded-2xl border border-white/5 min-h-[100px] shadow-inner">
                               <p className="text-[13px] font-black text-gray-200 italic leading-relaxed">
                                 {scene.visual} | {scene.action}
                               </p>
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest italic">** Lời Bình (VO) **</span>
+                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest italic opacity-50">** Lời Bình (VO) **</span>
                             <p className="text-[11px] font-medium text-blue-300 italic">{scene.voiceover}</p>
                           </div>
                        </div>
@@ -291,7 +310,7 @@ const App: React.FC = () => {
                                 {copiedId === `p-vid-${scene.id}` ? 'Đã Chép' : 'Chép Prompt'}
                               </button>
                             </div>
-                            <pre className="bg-black/60 p-6 rounded-2xl border border-white/5 text-[12px] font-mono text-blue-200/70 italic overflow-x-auto whitespace-pre-wrap leading-relaxed border-l-2 border-blue-600">
+                            <pre className="bg-black/60 p-6 rounded-2xl border border-white/5 text-[12px] font-mono text-blue-200/70 italic overflow-x-auto whitespace-pre-wrap leading-relaxed border-l-2 border-blue-600 shadow-2xl">
                               {`\`\`\`\n${scene.grok_video_prompt}\n\`\`\``}
                             </pre>
                           </div>
@@ -317,8 +336,8 @@ const App: React.FC = () => {
             <span className="text-blue-500">PHV</span> Generator Tool
           </span>
         </div>
-        <div className="flex items-center gap-4 text-[9px] font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 px-6 py-2.5 rounded-full border border-blue-500/20">
-          <Activity size={14} className="animate-pulse" />
+        <div className="flex items-center gap-4 text-[9px] font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 px-6 py-2.5 rounded-full border border-blue-500/20 shadow-inner">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Turbo Active
         </div>
       </header>
@@ -327,7 +346,7 @@ const App: React.FC = () => {
       
       <footer className="w-full py-12 px-10 border-t border-white/5 text-center mt-20">
         <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.5em] italic">
-          Designed by PHV & Powered by Gemini 3 Flash
+          Designed by PHV & Optimized for Vercel
         </p>
       </footer>
     </div>
