@@ -1,0 +1,8 @@
+{
+  "name": "PHV Generator Tool",
+  "description": "Công cụ phân tích kịch bản và chia cảnh 6 giây tự động để tạo video AI chuyên nghiệp.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
