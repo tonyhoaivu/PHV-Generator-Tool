@@ -116,6 +116,7 @@ const App: React.FC = () => {
   const [result, setResult] = useState<ScriptAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isApiKeyDetected, setIsApiKeyDetected] = useState<boolean>(false);
+  const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(true);
   const [ads, setAds] = useState<Ad[]>([]);
   const [appLogo, setAppLogo] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -123,10 +124,20 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const checkApiKey = async () => {
     const key = process.env.API_KEY || "";
-    setIsApiKeyDetected(!!key && key !== 'undefined' && key.length > 10);
+    const detected = !!key && key !== 'undefined' && key.length > 10;
+    setIsApiKeyDetected(detected);
+    
+    if (window.aistudio) {
+      const selected = await window.aistudio.hasSelectedApiKey();
+      setHasSelectedKey(selected);
+    }
+  };
 
+  useEffect(() => {
+    checkApiKey();
+    
     const savedAds = localStorage.getItem('phv_ads');
     if (savedAds) setAds(JSON.parse(savedAds));
     else setAds(DEFAULT_ADS);
@@ -137,6 +148,13 @@ const App: React.FC = () => {
     const savedAuth = localStorage.getItem('phv_admin_auth');
     if (savedAuth === 'true') setIsAdminAuthenticated(true);
   }, []);
+
+  const handleSelectKey = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      await checkApiKey();
+    }
+  };
 
   const saveAds = (newAds: Ad[]) => {
     setAds(newAds);
@@ -188,7 +206,7 @@ const App: React.FC = () => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
 
-    const newFiles = await Promise.all(Array.from(selectedFiles).map(async (file) => {
+    const newFiles = await Promise.all(Array.from(selectedFiles as FileList).map(async (file: File) => {
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -281,6 +299,14 @@ const App: React.FC = () => {
            <div onClick={() => setView('admin')} className="cursor-pointer hover:bg-emerald-50 p-4 rounded-2xl transition-all group border border-transparent hover:border-emerald-100">
               <Settings size={28} className="text-emerald-800 group-hover:rotate-180 transition-transform duration-1000" />
            </div>
+           {!hasSelectedKey && (
+             <button 
+               onClick={handleSelectKey}
+               className="px-10 py-4 rounded-full text-[11px] font-black tracking-[0.3em] bg-amber-50 text-amber-600 border border-amber-100 shadow-sm hover:bg-amber-100 transition-all"
+             >
+               • SELECT API KEY
+             </button>
+           )}
            <div className={`px-10 py-4 rounded-full text-[11px] font-black tracking-[0.3em] border transition-all ${isApiKeyDetected ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' : 'bg-red-50 text-red-600 border-red-100'}`}>
              {isApiKeyDetected ? '• ENGINE ACTIVE' : '• ENGINE ERROR'}
            </div>

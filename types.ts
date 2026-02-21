@@ -54,3 +54,12 @@ export interface AnalysisOptions {
   doAnalysis: boolean;
   type: 'video' | 'image' | 'text';
 }
+
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}

@@ -7,7 +7,10 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
   
   let parts: any[] = [];
   const isString = typeof input === 'string';
-  const isUrl = isString && (input.includes('youtube.com') || input.includes('youtu.be') || input.includes('tiktok.com') || input.includes('facebook.com') || input.includes('fb.watch'));
+  const isUrl = isString && (
+    /https?:\/\/(www\.)?(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/.test(input) ||
+    input.startsWith('http')
+  );
 
   if (Array.isArray(input)) {
     input.forEach(img => {
@@ -17,7 +20,9 @@ export const analyzeVideoContent = async (input: string | { data: string, mimeTy
     parts.push({ inlineData: { data: input.data, mimeType: input.mimeType } });
   } else {
     const promptPrefix = isUrl 
-      ? `NHIỆM VỤ: Bạn là chuyên gia Biên tập Video và Phân tích Dữ liệu thị giác. Hãy thực hiện "Micro-Analysis" theo quy tắc 6 giây cho video này: ${input}. Đồng thời đề xuất tiêu đề Viral và Hashtag top xu hướng.`
+      ? `NHIỆM VỤ: Bạn là chuyên gia Biên tập Video. Hãy truy cập và phân tích nội dung video từ link này: ${input}. 
+         Sử dụng các công cụ tìm kiếm và bối cảnh URL để lấy thông tin chi tiết về kịch bản, lời thoại, hình ảnh và âm thanh. 
+         Sau đó thực hiện "Micro-Analysis" theo quy tắc 6 giây cho video này. Đề xuất tiêu đề Viral và Hashtag top xu hướng.`
       : `NHIỆM VỤ: Dựa trên ý tưởng "${input}", hãy xây dựng kịch bản "Chiến binh Rau Củ" 6s và đề xuất chiến lược viral (Tiêu đề + Hashtag).`;
     parts.push({ text: promptPrefix });
   }
@@ -109,11 +114,14 @@ Bạn là một chuyên gia Biên tập Video, Phân tích Dữ liệu thị gi�
       }
     };
 
-    const modelName = isUrl ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+    const modelName = isUrl ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
       model: modelName,
       contents: { parts },
-      config
+      config: {
+        ...config,
+        tools: isUrl ? [{ googleSearch: {} }, { urlContext: {} }] : undefined,
+      }
     });
 
     const result = JSON.parse(response.text || "{}");
